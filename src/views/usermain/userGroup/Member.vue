@@ -119,18 +119,19 @@ const member = ref({
   groupId: id.value
 })
 
-const roleTable = ['管理者', '维护', '普通用户']
+const roleTable = ['管理者',  '普通用户','维护']
 const rolePermission = [
-  {
+{
     value: 1,
-    label: '维护',
+    label: '普通用户',
     disabled: false,
   },
   {
     value: 2,
-    label: '普通用户',
+    label: '维护',
     disabled: false,
-  }
+  },
+  
 ]
 
 const persion = ref([])// 成员名称下拉框

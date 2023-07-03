@@ -71,7 +71,7 @@ const list = () => {
 // 上传根证书
 const rootCertUpload = () => {
     let formData = new FormData()
-    console.log(file.value.files[0])
+    // console.log(file.value.files[0])
     if (file.value.files[0] !== undefined) {
         formData.append("files", file.value.files[0])
     }

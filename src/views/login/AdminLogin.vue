@@ -1,4 +1,8 @@
 <template>
+    <div>
+        <SKFDriverDownload v-if="dialogSKFDriver" v-model="dialogSKFDriver"></SKFDriverDownload>
+    </div>
+    
     <div class="wrapper">
         <div class="container" v-loading="loadding" element-loading-background="rgba(255, 255, 255, 0.8)"
             element-loading-text="数据加载中...">
@@ -17,7 +21,7 @@
                     <el-option v-for="keyItem in keyList" :key="keyItem.name" :label="keyItem.name" :value="keyItem.name" />
                 </el-select>
                 <el-button v-if="driver == false" type="info" size="large" style="margin-left : 25px ; "
-                    @click="openDriver">
+                    @click="getVersion">
                     刷新
                 </el-button>
                 <el-button v-else type="info" size="large" style="margin-left : 25px ; " @click="getEnumList">
@@ -41,9 +45,7 @@
                     绑定
                 </el-button>
             </div>
-            <a href="/ui/skfdriver.msi"><el-button link class="link-button">
-                    下载驱动程序
-                </el-button></a>
+            <el-button link class="link-button" @click="dialogSKFDriver = true;">下载驱动程序</el-button>
         </div>
 
     </div>
@@ -57,9 +59,10 @@ import { ElButton, ElMessage } from 'element-plus';
 import { Warning } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import GInput from "../../components/GInput.vue";
-import customProtocolCheck from "custom-protocol-check";
 import { useStore } from "vuex";
+import SKFDriverDownload from "../../components/skfdriver/SKFDriverDownload.vue";
 
+const dialogSKFDriver = ref(false)
 const loadding = ref(false)
 const username = ref('');
 const usbKey = ref('');
@@ -100,7 +103,7 @@ const handleLogin = () => {
             text3: username.value,
             pin: pin.value,
             ukeyName: usbKey.value,
-            B: "dpm",
+            B: "note",
         }
         return axios.post("http://127.0.0.1:28081/skf/ukey/eccEntityAuth", tbs)
     }).then((resp) => {
@@ -109,12 +112,12 @@ const handleLogin = () => {
         store.commit("saveUserInfo", resp.data)
         if (resp.data.type == "admin") {
             router.push({
-                name: "adminProject"
+                name: "UserManagement"
             })
         }
         else if (resp.data.type == "audit") {
             router.push({
-                name: "operationLog"
+                name: "OperationLog"
             })
         }
     }).catch((err) => {
@@ -128,7 +131,7 @@ const handleLogin = () => {
 
 const adminBinding = () => {
     router.push({
-        name: "binding"
+        name: "Binding"
     })
 }
 
@@ -152,7 +155,6 @@ const handlePinBlur = (v) => {
 const getEnumList = () => {
     loadding.value = true
     axios.get("http://127.0.0.1:28081/skf/ukey/enum").then((resp) => {
-        // console.log(resp.data);
         keyList.value = resp.data
         if (keyList.value.length >= 1 && usbKey.value == "") {
             // 未选择设备
@@ -186,77 +188,18 @@ const getVersion = () => {
         driver.value = true
     }).catch(() => {
         // 调用失败捕获异常
+        ElMessage.error({ message: "请下载驱动程序或双击图标打开驱动程序", duration: 2000, showClose: true });
     })
 }
 
 
-// 打开驱动程序后枚举设备
-let openFlag = false
-
-const openDriver = () => {
-    if (openFlag) {
-        clearInterval(open)
-        openFlag = false
-    }
-    customProtocolCheck(
-        "skfdriver://",
-        () => {
-            ElMessage.error({ message: "请下载驱动程序", duration: 2000, showClose: true });
-            console.log('协议未注册')
-            clearInterval(open)
-            openFlag = false
-        },
-        () => {
-            console.log("协议已注册");
-            openFlag = true
-        }, 3000
-    );
-
-    // 判断驱动是否被打开
-    checkDeviceOpen()
-}
-
-let open = null
-const checkDeviceOpen = () => {
-    // if (openFlag == false) {
-    //     clearInterval(open); //关闭
-    //     return
-    // }
-    open = setInterval(() => {
-        openFlag = true
-        axios.get("http://127.0.0.1:28081/skf/ukey/version", { timeout: 300 }).then(() => {
-            driver.value = true
-            getEnumList()
-            clearInterval(open)
-            openFlag = false
-        }).catch(() => {
-            // 调用失败捕获异常
-        })
-    }, 2 * 1000);
-}
-
-// 定时feed
-const timer = setInterval(() => {
-    axios.get("http://127.0.0.1:28081/skf/ukey/feed").then((resp) => {
-
-    }).catch(() => { })
-}, 30 * 1000);
 
 onMounted(() => {
     getVersion()
 })
 
 
-// 离开页面，自动保存
-onUnmounted(() => {
-    if (timer) { //如果定时器还在运行 或者直接关闭，不用判断
-        clearInterval(timer); //关闭
-    }
-    if (open) {
-        clearInterval(open); //关闭
-        openFlag = false
-    }
-})
+
 
 </script>
 

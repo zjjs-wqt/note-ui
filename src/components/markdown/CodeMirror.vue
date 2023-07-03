@@ -1,6 +1,6 @@
 <template>
   <codemirror v-model="content" :autofocus="true" :indent-with-tab="true" :tab-size="4"
-    :style="{ overflow: 'auto', minHeight: '600px', height: 'calc(83.7vh)' }" :extensions="extensions" @ready="handleReady"
+    :style="{ overflow: 'auto', minHeight: '600px', height: 'calc(86vh)' }" :extensions="extensions" @ready="handleReady"
     @update="getCursor" @drop="drop" @paste="paste" v-loading="loading"
     element-loading-background="rgba(255, 255, 255, 0.8)" element-loading-text="数据加载中..." />
 </template>

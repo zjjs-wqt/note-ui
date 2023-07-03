@@ -20,8 +20,10 @@
             <el-button type="primary" style="margin-top: 16px;margin-left: 5px;" @click="dialogVisible = true"
                 v-if="noteInfo.role == 0 && editState == false && noteInfo.isDelete == 0">分享</el-button>
             <el-button type="warning" style="margin-top: 16px;margin-left: 5px;"
-                @click="sharedVisible = true ; getShareList()"
+                @click="sharedVisible = true; getShareList()"
                 v-if="noteInfo.role == 0 && editState == false && noteInfo.isDelete == 0">已分享</el-button>
+            <el-button type="info" style="margin-top: 16px;margin-left: 5px;" @click="groupVisible = true"
+                v-if="editState == false && noteInfo.isDelete == 0">保存至</el-button>
             <div class="md-btn-group" v-if="editState == false">
                 <div class="md-btn">
                     <el-button type="primary" style="margin-top:5px;" @click="changeToEdit"
@@ -30,9 +32,11 @@
                         v-if="noteInfo.role == 0 && noteInfo.isDelete == 0">刪除</el-button>
                     <el-button type="warning" style="margin-top:5px;" @click="toRestore"
                         v-if="noteInfo.role == 0 && noteInfo.isDelete == 1">恢复</el-button>
+
                 </div>
                 <div class="md-btn">
-                    <el-button type="primary" style="margin-top:5px;" @click="remarkStatus = true;remarkBackup=noteInfo.remark"
+                    <el-button type="primary" style="margin-top:5px;"
+                        @click="remarkStatus = true; remarkBackup = noteInfo.remark"
                         v-if="noteInfo.role == 1 && remarkStatus == false">修改备注</el-button>
                     <el-button v-if="remarkStatus == true" style="margin-top:5px;" :disabled="btnStatus"
                         @click="cancel">取消</el-button>
@@ -115,6 +119,25 @@
         </el-dialog>
 
 
+        <el-dialog v-model="groupVisible" :close-on-click-modal="false" :show-close="false" title="笔记" width="30%">
+            <el-form label-width="120px">
+                <el-form-item label="文件夹" prop="tags" style="width: 80%;">
+                    <el-select v-model="noteInfo.noteGroup" placeholder="保存至" multiple filterable default-first-option
+                        allow-create style="width:350px">
+                        <el-option v-for="item in tagOptions" :key="item" :label="item" :value="item" />
+                    </el-select>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="groupVisible = false;">
+                        取消
+                    </el-button>
+                    <el-button type="primary" @click="changeGroup">提交</el-button>
+                </span>
+            </template>
+        </el-dialog>
+
         <el-dialog v-model="sharedVisible" :close-on-click-modal="false" :show-close="false" title="已分享" width="30%">
             <el-tabs v-model="activeName" class="demo-tabs">
                 <el-tab-pane label="用户" name="user">
@@ -178,7 +201,12 @@ const exportStatus = ref(false)
 const remarkStatus = ref(false)
 const dialogVisible = ref(false)
 const sharedVisible = ref(false)
+const groupVisible = ref(false)
 const activeName = ref('user')
+const tagOptions = ref()
+const user = ref({})
+user.value = store.getters.getUserInfo
+tagOptions.value = user.value.noteTags
 const id = ref(0)
 id.value = Number(router.params.id)
 
@@ -265,8 +293,8 @@ const memRemoteMethodForGroup = (keyword) => {
     }
     last = keyword;
     selectLoading.value = true
-    // 3. 发起请求
-    axios.get("/api/userGroup/list?role=0&keyword=" + keyword).then((resp) => {
+    // 3. 发起请求 /api/userGroup/list?role=0&keyword=
+    axios.get("/api/userGroup/list?keyword=" + keyword).then((resp) => {
         // 4. 绑定数据
         group.value = resp.data
     }).then(() => {
@@ -285,6 +313,23 @@ const memRemoteMethodForGroup = (keyword) => {
     })
 }
 
+const changeGroup = () => {
+    axios.get("/api/note/group?id="+id.value+"&group="+noteInfo.value.noteGroup ).then((resp) => {
+        
+        if (resp.data != "") {
+            user.value.noteTags = resp.data
+            tagOptions.value = resp.data
+            store.commit("saveNoteTags", user.value.noteTags)
+            emit("update:change", true)
+        }
+        ElMessage.success({ message: "修改成功", duration: 1000, showClose: true })
+    }).catch((err) => {
+        // loading.value = false
+        ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
+    }).finally(()=>{
+        groupVisible.value = false
+    })
+}
 
 const share = () => {
     let shareForm = {}
@@ -387,6 +432,10 @@ const init = () => {
     loading.value = true
     axios.get("/api/note/info?id=" + id.value).then((resp) => {
         noteInfo.value = resp.data
+        if (noteInfo.value.noteGroup !== ""){
+            noteInfo.value.noteGroup = noteInfo.value.noteGroup.split(",")
+        }
+
         axios.get("/api/note/content?id=" + noteInfo.value.id).then((resp) => {
             content.value = resp.data
             loading.value = false
@@ -671,7 +720,7 @@ onUnmounted(() => {
 <style scoped>
 .md-body {
     display: flex;
-    padding: 10px;
+    padding: 8px;
     /* max-height: 85px; */
 }
 

@@ -98,9 +98,9 @@ const handleLogin = () => {
 }
 
 const handleSsoLogin = () => {
-    const client_id = '596f07bb-7fce-448b-a2a6-84e508929a90';
-    const authorize_uri = 'http://127.0.0.1:8008/oauth/authorize';
-    const redirect_uri = 'http://127.0.0.1:80/api/redirect';
+    const client_id = 'c05e7e41-18ae-4361-81c4-9010d9dd4623';
+    const authorize_uri = 'http://nantemen.hzauth.com/oauth/authorize';
+    const redirect_uri = 'http://note.hzmx.com/api/redirect';
     const date = Date.parse(new Date());
 
     window.location.href = `${authorize_uri}?client_id=${client_id}&redirect_uri=${redirect_uri}&state=${date}`;

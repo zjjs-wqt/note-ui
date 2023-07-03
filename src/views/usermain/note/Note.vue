@@ -1,7 +1,7 @@
 <template>
     <div class="doc-body" v-loading="loading" element-loading-background="rgba(255, 255, 255, 0.8)"
         element-loading-text="数据加载中...">
-        <el-scrollbar height="calc(93.5vh)">
+        <el-scrollbar height="calc(93.5vh)" style="width:150px">
             <el-menu class="doc-menu" default-active="all">
                 <el-button type="primary" class="doc-btn" @click="dialogVisible = true" :disabled="newBtnStatus">
                     <el-icon>
@@ -14,19 +14,19 @@
                 <el-menu-item index="myNotes"
                     @click="searchGroup = '', searchRole = 0, searchIsDelete = 0, searchKeyWord = '', searchTags = '', init()">我的笔记</el-menu-item>
 
-                <el-sub-menu index="userGroup">
+                <el-sub-menu index="userGroup" >
                     <template #title><span> 用户组</span></template>
-                    <el-menu-item v-for="item, index in userGroup" :index="item.name" :key="index"
+                    <el-menu-item v-for="item, index in userGroup" :index="'user-'+item.name" :key="index"
                         @click="searchGroup = item.belong, searchTags = '', searchRole = 255, searchIsDelete = 0, searchKeyWord = '', init()">
                         {{ item.name }}</el-menu-item>
                 </el-sub-menu>
 
-                <el-sub-menu index="tags">
-                    <template #title><span>标签</span></template>
+                <el-sub-menu index="tags" >
+                    <template #title><span>文件夹</span></template>
                     <div v-if="user.noteTags != ''">
-                        <el-menu-item v-for="item, index in user.noteTags" :index="item" :key="index" 
+                        <el-menu-item v-for="item, index in user.noteTags" :title=item  :index="'note-'+item" :key="index" 
                         @click="searchGroup = '', searchTags = item, searchRole = 255, searchIsDelete = 0, searchKeyWord = '', init()">
-                        {{ item }}</el-menu-item>
+                        <div class="hide" >{{ item }}</div></el-menu-item>
                     </div>
                     
                 </el-sub-menu>
@@ -88,9 +88,9 @@
                         <el-form-item label="名称" prop="title" style="width: 80%;">
                             <el-input v-model="form.title"></el-input>
                         </el-form-item>
-                        <el-form-item label="标签" prop="tags" style="width: 80%;">
-                            <el-select v-model="form.tags" placeholder="请添加标签" multiple filterable default-first-option
-                                allow-create>
+                        <el-form-item label="文件夹" prop="tags" style="width: 80%;">
+                            <el-select v-model="form.tags" placeholder="保存至" multiple filterable default-first-option
+                                allow-create style="width:320px" >
 
                                 <el-option v-for="item in tagOptions" :key="item" :label="item" :value="item"  />
                             </el-select>
@@ -165,28 +165,7 @@ const handleSizeChange = (val) => {
     init();
 }
 
-const options = reactive([
-    {
-        value: 'markdown',
-        label: 'markdown',
-    },
-    {
-        value: 'word',
-        label: 'word',
-    },
-    {
-        value: 'txt',
-        label: 'txt',
-    },
-    {
-        value: 'excel',
-        label: 'excel',
-    },
-    {
-        value: 'file',
-        label: '其他',
-    },
-])
+
 const ruleForm = ref()
 const form = ref({
     title: "",
@@ -232,6 +211,7 @@ const getOutline = (val) => {
 
 // 初始化
 const init = () => {
+    user.value = store.getters.getUserInfo
     let url = ""
     url += "/api/note/noteList?role=" + searchRole.value
     if (searchIsDelete.value !== 0) {
@@ -368,6 +348,14 @@ const getOutlineTitle = (item) => {
 
 .el-main {
     --el-main-padding: 0px;
+}
+
+.hide{
+	display: block;
+	width: 150px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 /* .doc-outline-btn{

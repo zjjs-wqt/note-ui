@@ -1,5 +1,5 @@
 import axios from 'axios'
-import router from "@/router/index.js";
+import router from "../src/router/index.js";
 
 export default function () {
     // http request 拦截器

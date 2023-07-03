@@ -24,7 +24,7 @@
       </el-main>
     </el-container>
 
-    <el-dialog v-model="dialogVisible" :close-on-click-modal="false" :show-close="false" title="文档" width="30%">
+    <el-dialog v-model="dialogVisible" :close-on-click-modal="false" :show-close="false" title="用户组" width="30%">
       <el-form ref="ruleForm" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="名称" prop="name" style="width: 80%;">
           <el-input v-model="form.name"></el-input>

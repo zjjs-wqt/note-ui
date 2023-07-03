@@ -51,7 +51,7 @@ const toRestore = ( info ) => {
 const init = () => {
     axios.get("/api/note/noteList").then((resp) => {
         tableData.value = resp.data.records
-        console.log(resp.data.records);
+        // console.log(resp.data.records);
     })
 }
 

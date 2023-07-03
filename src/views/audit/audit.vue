@@ -2,7 +2,7 @@
     <div class="pj-top">
         <el-menu class="pj-menu" mode="horizontal" router :default-active="activeIndex">
             <div class="pj-title">
-                <img src="../../../public/dpm.svg" style="width: 25px; height : 25px ;padding-right:10px">
+                <img src="../../../public/note.svg" style="width: 25px; height : 25px ;padding-right:10px">
                 <div style="padding-right: 10px;">项目研发管理系统</div>
                 <el-tag type="info" style="font-size:18px;">{{ version.systemVersion }}</el-tag>
             </div>

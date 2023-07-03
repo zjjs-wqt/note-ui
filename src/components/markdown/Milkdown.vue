@@ -6,7 +6,7 @@
 <script setup>
 import 'katex/dist/katex.min.css';
 import 'prism-themes/themes/prism-nord.css'
-import { Editor, rootCtx, defaultValueCtx, editorViewOptionsCtx} from "@milkdown/core";
+import { Editor, rootCtx, defaultValueCtx, editorViewOptionsCtx } from "@milkdown/core";
 import { nordLight } from "@milkdown/theme-nord";
 import { VueEditor, useEditor } from "@milkdown/vue";
 import { emoji } from "@milkdown/plugin-emoji";
@@ -92,7 +92,7 @@ watch(props, (newVal, oldVal) => {
   if (newVal.id != id.value) {
     id.value = newVal.id
   }
-  if (newVal.pattern != pattern.value){
+  if (newVal.pattern != pattern.value) {
     pattern.value = newVal.pattern
     getOutline()
   }
@@ -100,7 +100,7 @@ watch(props, (newVal, oldVal) => {
 
 
 
-const getTitleList  = () => {
+const getTitleList = () => {
   let nodeList = document
     .querySelector(".milkdown .editor")
     ?.querySelectorAll("h1,h2,h3,h4,h5,h6");
@@ -116,26 +116,26 @@ const getTitleList  = () => {
 
 
 const getOutline = () => {
-  emit("update:outline",getTitleList())
+  emit("update:outline", getTitleList())
 }
 
 
 // 定时任务 -- 目前存在问题，启用定时任务，日后修改
 const timer = setInterval(() => {
-    getOutline()
-},  1000);
+  getOutline()
+}, 1000);
 
 // 离开页面，自动保存
 onUnmounted(() => {
-    if (timer) { //如果定时器还在运行 或者直接关闭，不用判断
-        clearInterval(timer); //关闭
-    }
+  if (timer) { //如果定时器还在运行 或者直接关闭，不用判断
+    clearInterval(timer); //关闭
+  }
 })
 
 const editable = () => !readonly.value;
 
 // 上传markdown 文本修改至父组件
-const emit = defineEmits(["update:md","update:outline"])
+const emit = defineEmits(["update:md", "update:outline"])
 
 const save = (markdown) => {
   emit("update:md", markdown)

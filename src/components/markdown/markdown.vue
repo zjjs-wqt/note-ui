@@ -236,6 +236,6 @@ const toCode = () => {
 }
 
 .md :deep(.milkdown .editor) {
-  height: calc(74vh);
+  height: calc(75vh);
 }
 </style>
