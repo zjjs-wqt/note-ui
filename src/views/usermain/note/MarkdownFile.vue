@@ -122,7 +122,7 @@
         <el-dialog v-model="groupVisible" :close-on-click-modal="false" :show-close="false" title="笔记" width="30%">
             <el-form label-width="120px">
                 <el-form-item label="文件夹" prop="tags" style="width: 80%;">
-                    <el-select v-model="noteInfo.noteGroup" placeholder="保存至" multiple filterable default-first-option
+                    <el-select v-model="noteInfo.noteGroup" placeholder="保存至" filterable default-first-option
                         allow-create style="width:350px">
                         <el-option v-for="item in tagOptions" :key="item" :label="item" :value="item" />
                     </el-select>

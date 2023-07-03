@@ -9,8 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "latest",
+    "@codemirror/commands": "latest",
     "@codemirror/lang-markdown": "^6.0.2",
+    "@codemirror/language": "latest",
+    "@codemirror/lint": "latest",
     "@codemirror/search": "^6.2.3",
+    "@codemirror/state": "latest",
+    "@codemirror/view": "latest",
     "@element-plus/icons-vue": "^2.0.10",
     "@milkdown/core": "^6.4.1",
     "@milkdown/plugin-block": "^6.4.1",
@@ -63,13 +69,7 @@
     "vuex": "^4.0.2",
     "vuex-persistedstate": "^4.1.0",
     "y-websocket": "^1.4.5",
-    "yjs": "^13.5.41",
-    "@codemirror/view": "latest",
-    "@codemirror/commands": "latest",
-    "@codemirror/autocomplete": "latest",
-    "@codemirror/language": "latest",
-    "@codemirror/lint": "latest",
-    "@codemirror/state": "latest"
+    "yjs": "^13.5.41"
   },
   "devDependencies": {
     "@types/dompurify": "^2.4.0",

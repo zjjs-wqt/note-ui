@@ -1,14 +1,26 @@
 <template>
-    <div class="doc-body" v-loading="loading" element-loading-background="rgba(255, 255, 255, 0.8)"
+    <div class="doc-body" v-loading="loading"  element-loading-background="rgba(255, 255, 255, 0.8)"
         element-loading-text="数据加载中...">
         <el-scrollbar height="calc(93.5vh)" style="width:150px">
             <el-menu class="doc-menu" default-active="all">
+                
                 <el-button type="primary" class="doc-btn" @click="dialogVisible = true" :disabled="newBtnStatus">
                     <el-icon>
                         <Plus />
                     </el-icon>
                     &nbsp;新建
                 </el-button>
+
+            
+                <div></div>
+                <el-button type="warning" style="margin-bottom: 10px;width: 100%;" @click="folderVisible = true" :disabled="newBtnStatus">
+                    <el-icon>
+                        <Plus />
+                    </el-icon>
+                    &nbsp;新建文件夹
+                </el-button>
+
+
                 <el-menu-item index="all"
                     @click="searchGroup = '', searchRole = 255, searchIsDelete = 0, searchKeyWord = '', searchTags = '', init()">全部</el-menu-item>
                 <el-menu-item index="myNotes"
@@ -21,11 +33,13 @@
                         {{ item.name }}</el-menu-item>
                 </el-sub-menu>
 
-                <el-sub-menu index="tags" >
+                <el-sub-menu index="tags"  >
                     <template #title><span>文件夹</span></template>
-                    <div v-if="user.noteTags != ''">
+                    <div v-if="user.noteTags != ''" v-contextmenu:contextmenu>
                         <el-menu-item v-for="item, index in user.noteTags" :title=item  :index="'note-'+item" :key="index" 
-                        @click="searchGroup = '', searchTags = item, searchRole = 255, searchIsDelete = 0, searchKeyWord = '', init()">
+                        @click="searchGroup = '', searchTags = item, searchRole = 255, searchIsDelete = 0, searchKeyWord = '', init()"
+                        @mousedown.right.stop="getMenuItem(item)"
+                        >
                         <div class="hide" >{{ item }}</div></el-menu-item>
                     </div>
                     
@@ -40,7 +54,6 @@
         <split-pane :min="230" class="doc-aside">
 
             <template v-slot:left>
-
                 <el-scrollbar height="calc(93.5vh)">
                     <el-menu class="doc-menu" router>
                         <el-input placeholder="搜索" v-model="searchKeyWord" :prefix-icon="Search" @keydown.enter="init()"
@@ -89,7 +102,7 @@
                             <el-input v-model="form.title"></el-input>
                         </el-form-item>
                         <el-form-item label="文件夹" prop="tags" style="width: 80%;">
-                            <el-select v-model="form.tags" placeholder="保存至" multiple filterable default-first-option
+                            <el-select v-model="form.tags" placeholder="保存至"  filterable default-first-option
                                 allow-create style="width:320px" >
 
                                 <el-option v-for="item in tagOptions" :key="item" :label="item" :value="item"  />
@@ -106,9 +119,30 @@
                         </span>
                     </template>
                 </el-dialog>
+
+                <el-dialog v-model="folderVisible" :close-on-click-modal="false" :show-close="false" title="新建文件夹" width="30%">
+                    <el-form ref="folderRuleForm" :model="folderForm" :rules="folderRules" label-width="120px">
+                        <el-form-item label="名称" prop="title" style="width: 80%;">
+                            <el-input v-model="folderForm.name"></el-input>
+                        </el-form-item>
+                    </el-form>
+                    <template #footer>
+                        <span class="dialog-footer">
+                            <el-button
+                                @click="folderVisible = false; folderForm.name = null;folderRuleForm.resetFields()">
+                                取消
+                            </el-button>
+                            <el-button type="primary" @click="createFolder">提交</el-button>
+                        </span>
+                    </template>
+                </el-dialog>
             </template>
         </split-pane>
     </div>
+
+    <v-contextmenu ref="contextmenu" :disabled="contentMeneFlag">
+        <v-contextmenu-item @click="form.tags=folderName;dialogVisible=true; ">创建文件</v-contextmenu-item>
+        </v-contextmenu>
 </template>
 
 <script setup>
@@ -129,7 +163,9 @@ const searchIsDelete = ref(0)
 const searchKeyWord = ref('')
 const searchTags = ref('')
 const searchGroup = ref('')
+const folderVisible = ref(false)
 
+const folderName = ref()
 const user = ref({})
 user.value = store.getters.getUserInfo
 // console.log(user.value.noteTags)
@@ -137,6 +173,7 @@ const role = ref('')
 role.value = store.getters.getRole
 const search = ref("")
 const file = ref(null)
+const contentMeneFlag = ref(false)
 const menuFlag = ref(0)
 const tagOptions = ref()
 tagOptions.value = user.value.noteTags
@@ -188,6 +225,28 @@ const rules = ref({
     ],
 
 })
+
+const folderRuleForm = ref()
+const folderForm = ref({
+    name:"",
+})
+
+const folderRules = ref({
+    name: [
+        {
+            required: true,
+            message: '请填写文件夹名称',
+            trigger: 'change'
+        },
+        {
+            max: 15,
+            message: '最大长度不可超过15字',
+            trigger: 'change'
+        },
+    ],
+})
+
+
 
 const dialogVisible = ref(false)
 
@@ -272,6 +331,12 @@ const toedit = (val) => {
     newBtnStatus.value = val
 }
 
+
+const getMenuItem = (val) => {
+    folderName.value = val
+}
+
+
 // 创建文档
 const create = () => {
     ruleForm.value.validate((valid) => {
@@ -288,6 +353,34 @@ const create = () => {
                     tagOptions.value = resp.data.tags
                     store.commit("saveNoteTags", user.value.noteTags)
                 }
+                ElMessage.success({ message: "新建成功", duration: 1000, showClose: true })
+            }).catch((err) => {
+                loading.value = false
+                ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
+            })
+        }
+    })
+}
+
+
+// 创建文档
+const createFolder = () => {
+    folderRuleForm.value.validate((valid) => {
+        if (valid) {
+            loading.value = true
+            folderForm.value.id = user.value.id
+            console.log(form.value);
+            axios.post("/api/folder/create", folderForm.value).then((resp) => {
+                init()
+                folderRuleForm.value.resetFields()
+                loading.value = false
+                folderVisible.value = false
+                if (resp.data.tags != "") {
+                    user.value.noteTags = resp.data.tags
+                    tagOptions.value = resp.data.tags
+                    store.commit("saveNoteTags", user.value.noteTags)
+                }
+                folderForm.value.name = ""
                 ElMessage.success({ message: "新建成功", duration: 1000, showClose: true })
             }).catch((err) => {
                 loading.value = false
