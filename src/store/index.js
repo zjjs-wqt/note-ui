@@ -14,6 +14,8 @@ export default createStore({
 	        groupTags:"",
             imgSrc:"",
         },
+        mode:"wysiwyg",
+        docId:0,
     },
     mutations: {
         saveVersion(state, version) {
@@ -30,8 +32,13 @@ export default createStore({
         },
         saveNoteTags(state,tags){
             state.userInfo.noteTags = tags
+        },
+        saveMode(state,mode){
+            state.mode = mode
+        },
+        saveDocId(state,docId){
+            state.docId = docId
         }
-
        
     },
     getters: {
@@ -40,6 +47,12 @@ export default createStore({
         },
         getUserInfo(state) {
             return state.userInfo
+        },
+        getMode(state){
+            return state.mode
+        },
+        getDocId(state){
+            return state.docId
         },
     },
     plugins: [

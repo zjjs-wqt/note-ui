@@ -1,148 +1,145 @@
 <template>
-    <div class="doc-body" v-loading="loading"  element-loading-background="rgba(255, 255, 255, 0.8)"
+    <div class="doc-body" v-loading="loading" element-loading-background="rgba(255, 255, 255, 0.8)"
         element-loading-text="数据加载中...">
-        <el-scrollbar height="calc(93.5vh)" style="width:150px">
-            <el-menu class="doc-menu" default-active="all">
-                
-                <el-button type="primary" class="doc-btn" @click="dialogVisible = true" :disabled="newBtnStatus">
-                    <el-icon>
-                        <Plus />
-                    </el-icon>
-                    &nbsp;新建
-                </el-button>
-
-            
-                <div></div>
-                <el-button type="warning" style="margin-bottom: 10px;width: 100%;" @click="folderVisible = true" :disabled="newBtnStatus">
-                    <el-icon>
-                        <Plus />
-                    </el-icon>
-                    &nbsp;新建文件夹
-                </el-button>
-
-
-                <el-menu-item index="all"
-                    @click="searchGroup = '', searchRole = 255, searchIsDelete = 0, searchKeyWord = '', searchTags = '', init()">全部</el-menu-item>
-                <el-menu-item index="myNotes"
-                    @click="searchGroup = '', searchRole = 0, searchIsDelete = 0, searchKeyWord = '', searchTags = '', init()">我的笔记</el-menu-item>
-
-                <el-sub-menu index="userGroup" >
-                    <template #title><span> 用户组</span></template>
-                    <el-menu-item v-for="item, index in userGroup" :index="'user-'+item.name" :key="index"
-                        @click="searchGroup = item.belong, searchTags = '', searchRole = 255, searchIsDelete = 0, searchKeyWord = '', init()">
-                        {{ item.name }}</el-menu-item>
-                </el-sub-menu>
-
-                <el-sub-menu index="tags"  >
-                    <template #title><span>文件夹</span></template>
-                    <div v-if="user.noteTags != ''" v-contextmenu:contextmenu>
-                        <el-menu-item v-for="item, index in user.noteTags" :title=item  :index="'note-'+item" :key="index" 
-                        @click="searchGroup = '', searchTags = item, searchRole = 255, searchIsDelete = 0, searchKeyWord = '', init()"
-                        @mousedown.right.stop="getMenuItem(item)"
-                        >
-                        <div class="hide" >{{ item }}</div></el-menu-item>
-                    </div>
-                    
-                </el-sub-menu>
-
-                <el-menu-item index="share"
-                    @click="searchGroup = '', searchRole = 254, searchIsDelete = 0, searchTags = '', searchKeyWord = '', init()">与我分享</el-menu-item>
-                <el-menu-item index="recycleBin"
-                    @click="searchGroup = '', searchIsDelete = 1, searchRole = 255, searchKeyWord = '', searchTags = '', init()">回收站</el-menu-item>
-            </el-menu>
-        </el-scrollbar>
-        <split-pane :min="230" class="doc-aside">
-
+        <split-pane :min="150" class="doc-aside">
             <template v-slot:left>
                 <el-scrollbar height="calc(93.5vh)">
-                    <el-menu class="doc-menu" router>
-                        <el-input placeholder="搜索" v-model="searchKeyWord" :prefix-icon="Search" @keydown.enter="init()"
-                            @clear="init()" clearable>
-                        </el-input>
-                        <div>
-                            <el-menu mode="horizontal" :ellipsis="false">
-                                <el-menu-item @click="menuFlag = 0" index="目录">文件目录</el-menu-item>
-                                <el-menu-item @click="menuFlag = 1" index="大纲"
-                                    :disabled="disabledOutline">&nbsp;&nbsp;大纲&nbsp;&nbsp;
-                                </el-menu-item>
-                            </el-menu>
-                        </div>
+                    <el-menu class="doc-menu" default-active="all">
+                        <el-button type="primary" class="doc-btn" @click="dialogVisible = true" :disabled="newBtnStatus">
+                            <el-icon>
+                                <Plus />
+                            </el-icon>
+                            &nbsp;新建
+                        </el-button>
 
-                        <div v-for="item, index in docList" :key="index" v-if="menuFlag == 0">
-                            <el-menu-item :index="'/index/noteList/' + item.id" v-if="item.remark == ''">
-                                {{ item.title }}
-                            </el-menu-item>
-                            <el-menu-item :index="'/index/noteList/' + item.id" v-else-if="item.remark !== ''">
-                                {{ item.remark }}
-                            </el-menu-item>
-                        </div>
+                        <div></div>
+                        <el-button type="warning" style="margin-bottom: 10px;width: 100%;" @click="folderVisible = true"
+                            :disabled="newBtnStatus">
+                            <el-icon>
+                                <Plus />
+                            </el-icon>
+                            &nbsp;新建文件夹
+                        </el-button>
 
-                        <el-pagination v-if="menuFlag == 0" style="margin-top: 15px ;margin-left: 15px;" class="pagiantion"
-                            :current-page="pagination.currentPage" :page-size="pagination.pageSize" :page-sizes="[10]"
-                            layout="total,  prev, pager, next" :pager-count="5" :total="pagination.total"
-                            @current-change="handleCurrentChange" small @size-change="handleSizeChange">
-                        </el-pagination>
+                        <el-menu-item index="all"
+                            @click="searchGroup = '', searchRole = 255, searchIsDelete = 0, searchKeyWord = '', searchTags = '', init()">全部</el-menu-item>
+                        <el-menu-item index="myNotes"
+                            @click="searchGroup = '', searchRole = 0, searchIsDelete = 0, searchKeyWord = '', searchTags = '', init()">我的笔记</el-menu-item>
 
-                        <el-menu>
-                            <div v-for="item, index in outlineMenu" :key="index" v-if="menuFlag == 1">
-                                <el-menu-item :index="item.text" @click="item.node.scrollIntoView()">
-                                    {{ getOutlineTitle(item) }}
+                        <el-sub-menu index="userGroup">
+                            <template #title><span> 用户组</span></template>
+                            <el-menu-item v-for="item, index in userGroup" :index="'user-' + item.name" :key="index"
+                                @click="searchGroup = item.belong, searchTags = '', searchRole = 255, searchIsDelete = 0, searchKeyWord = '', init()">
+                                {{ item.name }}</el-menu-item>
+                        </el-sub-menu>
+
+                        <el-sub-menu index="tags">
+                            <template #title><span>文件夹</span></template>
+                            <div v-if="user.noteTags != ''" v-contextmenu:contextmenu>
+                                <el-menu-item v-for="item, index in user.noteTags" :title=item :index="'note-' + item"
+                                    :key="index"
+                                    @click="searchGroup = '', searchTags = item, searchRole = 255, searchIsDelete = 0, searchKeyWord = '', init()"
+                                    @mousedown.right.stop="getMenuItem(item)">
+                                    <div class="hide">{{ item }}</div>
                                 </el-menu-item>
                             </div>
-                        </el-menu>
+
+                        </el-sub-menu>
+
+                        <el-menu-item index="share"
+                            @click="searchGroup = '', searchRole = 254, searchIsDelete = 0, searchTags = '', searchKeyWord = '', init()">与我分享</el-menu-item>
+                        <el-menu-item index="recycleBin"
+                            @click="searchGroup = '', searchIsDelete = 1, searchRole = 255, searchKeyWord = '', searchTags = '', init()">回收站</el-menu-item>
                     </el-menu>
                 </el-scrollbar>
             </template>
-
             <template v-slot:right>
-                <RouterView @update:change="init" @update:editing="toedit" @update:outline="getOutline" />
-                <el-dialog v-model="dialogVisible" :close-on-click-modal="false" :show-close="false" title="文档" width="30%">
-                    <el-form ref="ruleForm" :model="form" :rules="rules" label-width="120px">
-                        <el-form-item label="名称" prop="title" style="width: 80%;">
-                            <el-input v-model="form.title"></el-input>
-                        </el-form-item>
-                        <el-form-item label="文件夹" prop="tags" style="width: 80%;">
-                            <el-select v-model="form.tags" placeholder="保存至"  filterable default-first-option
-                                allow-create style="width:320px" >
+                <split-pane :min="230" class="doc-aside">
+                    <template v-slot:left>
+                        <el-scrollbar height="calc(93.5vh)">
+                            <el-menu class="doc-menu" router>
+                                <el-input placeholder="搜索" v-model="searchKeyWord" :prefix-icon="Search"
+                                    @keydown.enter="init()" @clear="init()" clearable>
+                                </el-input>
+                                <div>
+                                </div>
 
-                                <el-option v-for="item in tagOptions" :key="item" :label="item" :value="item"  />
-                            </el-select>
-                        </el-form-item>
-                    </el-form>
-                    <template #footer>
-                        <span class="dialog-footer">
-                            <el-button
-                                @click="dialogVisible = false; form.title = null; form.tags = ''; ruleForm.resetFields()">
-                                取消
-                            </el-button>
-                            <el-button type="primary" @click="create">提交</el-button>
-                        </span>
-                    </template>
-                </el-dialog>
+                                <div v-for="item, index in docList" :key="index">
+                                    <el-menu-item :index="'/index/noteList/' + item.id" v-if="item.remark == ''">
+                                        {{ item.title }}
+                                    </el-menu-item>
+                                    <el-menu-item :index="'/index/noteList/' + item.id" v-else-if="item.remark !== ''">
+                                        {{ item.remark }}
+                                    </el-menu-item>
+                                </div>
 
-                <el-dialog v-model="folderVisible" :close-on-click-modal="false" :show-close="false" title="新建文件夹" width="30%">
-                    <el-form ref="folderRuleForm" :model="folderForm" :rules="folderRules" label-width="120px">
-                        <el-form-item label="名称" prop="title" style="width: 80%;">
-                            <el-input v-model="folderForm.name"></el-input>
-                        </el-form-item>
-                    </el-form>
-                    <template #footer>
-                        <span class="dialog-footer">
-                            <el-button
-                                @click="folderVisible = false; folderForm.name = null;folderRuleForm.resetFields()">
-                                取消
-                            </el-button>
-                            <el-button type="primary" @click="createFolder">提交</el-button>
-                        </span>
+                                <el-pagination v-if="menuFlag == 0" style="margin-top: 15px ;margin-left: 15px;"
+                                    class="pagiantion" :current-page="pagination.currentPage"
+                                    :page-size="pagination.pageSize" :page-sizes="[10]" layout="total,  prev, pager, next"
+                                    :pager-count="5" :total="pagination.total" @current-change="handleCurrentChange" small
+                                    @size-change="handleSizeChange">
+                                </el-pagination>
+
+
+                            </el-menu>
+                        </el-scrollbar>
                     </template>
-                </el-dialog>
+
+                    <template v-slot:right>
+                        <RouterView @update:change="init" @update:editing="toedit" @update:outline="getOutline" />
+                        <el-dialog v-model="dialogVisible" :close-on-click-modal="false" :show-close="false" title="文档"
+                            width="30%">
+                            <el-form ref="ruleForm" :model="form" :rules="rules" label-width="120px">
+                                <el-form-item label="名称" prop="title" style="width: 80%;">
+                                    <el-input v-model="form.title"></el-input>
+                                </el-form-item>
+                                <el-form-item label="文件夹" prop="tags" style="width: 80%;">
+                                    <el-select v-model="form.tags" placeholder="保存至" filterable default-first-option
+                                        allow-create style="width:320px">
+
+                                        <el-option v-for="item in tagOptions" :key="item" :label="item" :value="item" />
+                                    </el-select>
+                                </el-form-item>
+                            </el-form>
+                            <template #footer>
+                                <span class="dialog-footer">
+                                    <el-button
+                                        @click="dialogVisible = false; form.title = null; form.tags = ''; ruleForm.resetFields()">
+                                        取消
+                                    </el-button>
+                                    <el-button type="primary" @click="create">提交</el-button>
+                                </span>
+                            </template>
+                        </el-dialog>
+
+                        <el-dialog v-model="folderVisible" :close-on-click-modal="false" :show-close="false" title="新建文件夹"
+                            width="30%">
+                            <el-form ref="folderRuleForm" :model="folderForm" :rules="folderRules" label-width="120px">
+                                <el-form-item label="名称" prop="title" style="width: 80%;">
+                                    <el-input v-model="folderForm.name"></el-input>
+                                </el-form-item>
+                            </el-form>
+                            <template #footer>
+                                <span class="dialog-footer">
+                                    <el-button
+                                        @click="folderVisible = false; folderForm.name = null; folderRuleForm.resetFields()">
+                                        取消
+                                    </el-button>
+                                    <el-button type="primary" @click="createFolder">提交</el-button>
+                                </span>
+                            </template>
+                        </el-dialog>
+                    </template>
+                </split-pane>
             </template>
         </split-pane>
+
+
     </div>
 
     <v-contextmenu ref="contextmenu" :disabled="contentMeneFlag">
-        <v-contextmenu-item @click="form.tags=folderName;dialogVisible=true; ">创建文件</v-contextmenu-item>
-        </v-contextmenu>
+        <v-contextmenu-item @click="form.tags = folderName; dialogVisible = true;">创建文件</v-contextmenu-item>
+    </v-contextmenu>
 </template>
 
 <script setup>
@@ -228,7 +225,7 @@ const rules = ref({
 
 const folderRuleForm = ref()
 const folderForm = ref({
-    name:"",
+    name: "",
 })
 
 const folderRules = ref({
@@ -443,12 +440,12 @@ const getOutlineTitle = (item) => {
     --el-main-padding: 0px;
 }
 
-.hide{
-	display: block;
-	width: 150px;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
+.hide {
+    display: block;
+    width: 150px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 /* .doc-outline-btn{
