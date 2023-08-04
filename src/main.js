@@ -9,7 +9,6 @@ import store from './store/index';
 import contextmenu from 'v-contextmenu';
 import "v-contextmenu/dist/themes/default.css";
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import axios from './components/axiosConfig'
 import useInterceptor from './useInterceptor.js'
 
 const app = createApp(App)

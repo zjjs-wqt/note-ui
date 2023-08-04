@@ -26,14 +26,6 @@ const routes = [
         path:'noteList',
         name:"NoteList",
         component: ()=> import("../views/usermain/note/Note.vue"),
-        children:[
-          {
-            path: ':id?',
-            name: 'Markdown',
-            props: true,
-            component: () => import('../views/usermain/note/MarkdownFile.vue')
-          }
-        ]
       },
       {
         path:'userGroup',

@@ -4,10 +4,10 @@
             <h2 v-if="editState == false && noteInfo.remark == '' && remarkStatus == false">{{ noteInfo.title }}</h2>
             <h2 v-else-if="editState == false && noteInfo.remark !== '' && remarkStatus == false"> {{ noteInfo.remark }}
             </h2>
-            <el-input v-model="noteInfo.title" class="md-input" 
+            <el-input v-model="noteInfo.title" class="md-input" @change="changeTitle"
                 v-else-if="editState == true && noteInfo.role == 0"></el-input>
             <div v-else-if="(editState == true && noteInfo.role !== 0) || remarkStatus == true" style="display: flex;">
-                <el-input v-model="noteInfo.remark" class="md-input" ></el-input>
+                <el-input v-model="noteInfo.remark" class="md-input" @change="changeTitle"></el-input>
                 <div class="md-update-time" style="color:#909399;">{{ noteInfo.title }}</div>
             </div>
 
@@ -45,19 +45,22 @@
                 </div>
             </div>
             <div class="md-btn-group" v-else>
-
+                <el-button-group class="md-group">
+                    <el-button type="primary" @click="Edit">编辑模式</el-button>
+                    <el-button type="primary" @click="Preview">预览模式</el-button>
+                    <el-button type="primary" @click="Mixed">混合模式</el-button>
+                    <el-button type="primary" @click="Code">代码模式</el-button>
+                </el-button-group>
                 <div class="md-btn">
                     <el-button :disabled="btnStatus" @click="cancel">取消</el-button>
                     <el-button @click="save" type="warning" :disabled="btnStatus">保存</el-button>
+                    <!-- <el-button @click="dialogRemoveVisible = true" type="danger" :disabled="btnStatus">删除</el-button> -->
                 </div>
             </div>
         </div>
-        <!-- <Markdown :content="content" :pattern="pattern" :codeType="codeType" :id="id" @update:content="update"
+        <Markdown :content="content" :pattern="pattern" :codeType="codeType" :id="id" @update:content="update"
             @update:ctState="changeState" @update:ctrlSave="timeSave" @update:outline="getOutline"
-            :class="[pattern === 2 && editState === true ? 'md-pattern' : '']"></Markdown> -->
-
-        <Vditor :content="content" ref="vditorRef" @init="initVditor" @loading="loading = false" :id="id"
-            :codeType="codeType" @update:ctrlSave="timeSave" @update:content="saveContent"></Vditor>
+            :class="[pattern === 2 && editState === true ? 'md-pattern' : '']"></Markdown>
 
 
         <el-dialog v-model="dialogVisible" :close-on-click-modal="false" :show-close="false" title="分享" width="30%">
@@ -119,8 +122,8 @@
         <el-dialog v-model="groupVisible" :close-on-click-modal="false" :show-close="false" title="笔记" width="30%">
             <el-form label-width="120px">
                 <el-form-item label="文件夹" prop="tags" style="width: 80%;">
-                    <el-select v-model="noteInfo.noteGroup" placeholder="保存至" filterable default-first-option allow-create
-                        style="width:350px">
+                    <el-select v-model="noteInfo.noteGroup" placeholder="保存至" filterable default-first-option
+                        allow-create style="width:350px">
                         <el-option v-for="item in tagOptions" :key="item" :label="item" :value="item" />
                     </el-select>
                 </el-form-item>
@@ -180,13 +183,11 @@
 
 import axios from 'axios';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { onUnmounted, ref, h, watch, onMounted } from 'vue';
+import { onUnmounted, ref, h, watch } from 'vue';
 import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router'
 import { useStore } from 'vuex';
 
-import Vditor from '../../../components/vditor/Vditor.vue';
-
-const vditorRef = ref()
+import Markdown from "../../../components/markdown/markdown.vue";
 const textarea = ref('')
 const noteInfo = ref({})
 const store = useStore()
@@ -204,17 +205,11 @@ const tagOptions = ref()
 const user = ref({})
 user.value = store.getters.getUserInfo
 tagOptions.value = user.value.noteTags
-const props = defineProps({
-    id: Number
-})
 const id = ref(0)
+id.value = Number(router.params.id)
+
 const remarkBackup = ref('')
-const contentTime = ref()
-const perviewFlag = ref(false)
-// 定时保存
-const saveContent = (val) => {
-    contentTime.value = val
-}
+
 const roleList = ["笔记拥有者", "可查看", "可编辑"]
 const form = ref({
     type: "user",
@@ -317,8 +312,8 @@ const memRemoteMethodForGroup = (keyword) => {
 }
 
 const changeGroup = () => {
-    axios.get("/api/note/group?id=" + id.value + "&group=" + noteInfo.value.noteGroup).then((resp) => {
-
+    axios.get("/api/note/group?id="+id.value+"&group="+noteInfo.value.noteGroup ).then((resp) => {
+        
         if (resp.data != "") {
             user.value.noteTags = resp.data
             tagOptions.value = resp.data
@@ -329,7 +324,7 @@ const changeGroup = () => {
     }).catch((err) => {
         // loading.value = false
         ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
-    }).finally(() => {
+    }).finally(()=>{
         groupVisible.value = false
     })
 }
@@ -415,10 +410,18 @@ const editState = ref(false)
 const pattern = ref(0)
 // 文档类型
 const codeType = ref("note")
+// 文档是否发生修改
+const ctState = ref(false)
 // 保存、删除按钮是否可用
 const btnStatus = ref(false)
 
-const emit = defineEmits(["update:change", "update:editing", "delete"])
+const emit = defineEmits(["update:change", "update:editing", "update:outline"])
+
+const outline = ref()
+const getOutline = (val) => {
+    outline.value = val
+    emit("update:outline", val)
+}
 
 const init = () => {
     if (id.value === 0) {
@@ -427,69 +430,35 @@ const init = () => {
     loading.value = true
     axios.get("/api/note/info?id=" + id.value).then((resp) => {
         noteInfo.value = resp.data
-        if (noteInfo.value.noteGroup !== "") {
+        if (noteInfo.value.noteGroup !== ""){
             noteInfo.value.noteGroup = noteInfo.value.noteGroup.split(",")
         }
 
         axios.get("/api/note/content?id=" + noteInfo.value.id).then((resp) => {
             content.value = resp.data
-            contentTime.value = resp.data
-
-            if (perviewFlag.value === true) {
-                perviewFlag.value = false
-                vditorRef.value.setValue(content.value)
-                vditorRef.value.modePreview()
-            } else {
-                // 先解除预览模式，将值注入后再换为预览模式
-                vditorRef.value.toPreview()
-                vditorRef.value.setValue(content.value)
-                vditorRef.value.modePreview()
-            }
+            loading.value = false
         }).catch((err) => {
+            loading.value = false
             ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
         })
     }).catch((err) => {
+        loading.value = false
         ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
     })
 }
-
-// 初始化编辑器
-const initVditor = () => {
-    vditorRef.value.setValue(content.value)
-    vditorRef.value.modePreview()
-}
-
-onMounted(() => {
-    id.value = props.id
-    init()
-    window.addEventListener('beforeunload', beforeunloadFn)
-})
-
-const beforeunloadFn = (e) => {
-    e = e || window.event;
-    if (editState.value === true) {
-        save()
-        e.preventDefault()
-        if (e) {
-            e.returnValue = '离开当前页面，会关闭你已打开的终端窗口和文件窗口，请问你是否重新加载';
-        }
-
-        return '离开当前页面，会关闭你已打开的终端窗口和文件窗口，请问你是否重新加载';
-    }
-}
+init()
 
 // 获取编辑状态
 const changeToEdit = () => {
     // 锁表单
     var lockDto = {}
     lockDto.userId = Number(store.getters.getUserInfo.id)
-    lockDto.id = String(id.value)
+    lockDto.id = router.params.id
 
     // 获取锁信息
     axios.post("/api/note/lock", lockDto).then((resp) => {
         editState.value = true
-        // 进入编辑模式
-        vditorRef.value.modeEdit()
+        pattern.value = 1
         emit("update:editing", true)
     }).catch((err) => {
         ElMessageBox.alert(err.response.data, '提示', {
@@ -499,44 +468,73 @@ const changeToEdit = () => {
     })
 }
 
+// 编辑模式
+const Edit = () => {
+    pattern.value = 1
+}
 
+// 预览模式
+const Preview = () => {
+    pattern.value = 2
+}
 
-watch(props, (newVal, oldVal) => {
-    if (newVal.id !== id.value) {
-        if (editState.value == true) {
-            // // 若处于编辑状态下，先切换回预览模式
-            // vditorRef.value.toPreview()
+// 混合模式
+const Mixed = () => {
+    pattern.value = 3
+}
 
-            perviewFlag.value = true
-            let formData = new FormData()
-            formData.append("id", id.value)
-            formData.append("content", vditorRef.value.getValue())
-            formData.append("autoSave", "true")
-            formData.append("title", noteInfo.value.title)
-            formData.append("remark", noteInfo.value.remark)
-            axios.post("/api/note/content", formData).then((resp) => {
-                ElMessage.info({ message: "修改成功", duration: 1000, showClose: true })
-                id.value = Number(to.params.id)
-                editState.value = false
-                remarkStatus.value = false
-                init()
-                emit("update:change", true)
+// 代码模式
+const Code = () => {
+    pattern.value = 4
+}
 
-            }).catch((err) => {
-                ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
-            })
-        }
-        else {
-            id.value = newVal.id
+// 获取子组件内容
+const update = (val) => {
+    content.value = val
+}
+
+// 获取子组件是否发生编辑
+const changeState = (val) => {
+    ctState.value = val
+}
+
+const changeTitle = () => {
+    ctState.value = true
+}
+
+// 监听路由变化
+onBeforeRouteUpdate((to, from) => {
+    if (ctState.value == true) {
+        let formData = new FormData()
+        formData.append("id", from.params.id)
+        formData.append("content", content.value)
+        formData.append("autoSave", "true")
+        formData.append("title", noteInfo.value.title)
+        formData.append("remark", noteInfo.value.remark)
+        axios.post("/api/note/content", formData).then((resp) => {
+            ElMessage.info({ message: "修改成功", duration: 1000, showClose: true })
+            id.value = Number(to.params.id)
+            pattern.value = 2
             editState.value = false
             remarkStatus.value = false
             init()
-        }
-        emit("update:editing", false)
+
+        }).catch((err) => {
+            ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
+        })
+        // btnStatus.value = false
+        ctState.value = false
     }
+    else {
+        id.value = Number(to.params.id)
+        pattern.value = 2
+        editState.value = false
+        remarkStatus.value = false
+        init()
 
+    }
+    emit("update:editing", false)
 })
-
 
 const toDelete = () => {
     ElMessageBox.confirm(
@@ -609,7 +607,7 @@ const exportDoc = () => {
 const save = () => {
     let formData = new FormData()
     formData.append("id", id.value)
-    formData.append("content", vditorRef.value.getValue())
+    formData.append("content", content.value)
     formData.append("autoSave", "false")
     formData.append("title", noteInfo.value.title)
     formData.append("remark", noteInfo.value.remark)
@@ -618,8 +616,8 @@ const save = () => {
         ElMessage.success({ message: "修改成功", duration: 2000, showClose: true })
         unlock()
         btnStatus.value = false
-        // 进入预览模式
-        vditorRef.value.modePreview()
+        pattern.value = 2
+        ctState.value = false
         remarkStatus.value = false
         emit("update:change", true)
 
@@ -641,7 +639,7 @@ const unlock = () => {
 
 // 定时任务 -- 5分钟一次自动保存
 const timer = setInterval(() => {
-    if (editState.value == true) {
+    if (ctState.value == true) {
         timeSave()
     }
 }, 5 * 60 * 1000);
@@ -649,7 +647,7 @@ const timer = setInterval(() => {
 // 自动保存
 const timeSave = () => {
     // 内容发生修改，自动修改
-    if (editState.value == true) {
+    if (ctState.value == true) {
         setTimeout(() => {
             btnStatus.value = true
             let formData = new FormData()
@@ -665,7 +663,7 @@ const timeSave = () => {
                 ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
                 btnStatus.value = false
             })
-            // editState.value = false
+            ctState.value = false
         }, 300)
     }
 }
@@ -675,35 +673,32 @@ const cancel = () => {
     if (noteInfo.value.role == 1) {
         remarkStatus.value = false
         noteInfo.value.remark = remarkBackup.value
-    }
+    } else {
+        // 锁表单
+        var lockDto = {}
+        lockDto.userId = Number(store.getters.getUserInfo.id)
+        lockDto.id = router.params.id
 
-    // 锁表单
-    var lockDto = {}
-    lockDto.userId = Number(store.getters.getUserInfo.id)
-    lockDto.id = String(id.value)
-
-    loading.value = true
-    pattern.value = 2
-    editState.value = false
-    // 获取锁信息
-    axios.post("/api/note/cancel", lockDto).then((resp) => {
-        content.value = resp.data
-        vditorRef.value.setValue(content.value)
-        axios.get("/api/note/info?id=" + id.value).then((resp) => {
-            noteInfo.value = resp.data
-            loading.value = false
-            // 进入预览模式
-            vditorRef.value.modePreview()
+        loading.value = true
+        pattern.value = 2
+        editState.value = false
+        ctState.value = false
+        // 获取锁信息
+        axios.post("/api/note/cancel", lockDto).then((resp) => {
+            content.value = resp.data
+            axios.get("/api/note/info?id=" + id.value).then((resp) => {
+                noteInfo.value = resp.data
+                loading.value = false
+            }).catch((err) => {
+                loading.value = false
+                ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
+            })
         }).catch((err) => {
             loading.value = false
             ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
         })
-    }).catch((err) => {
-        loading.value = false
-        ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
-    })
-    emit("update:editing", false)
-
+        emit("update:editing", false)
+    }
 
 }
 
@@ -761,4 +756,7 @@ onUnmounted(() => {
     padding-top: 23px;
 }
 
+.md-pattern :deep(.milkdown .editor) {
+    margin-top: 10px;
+}
 </style>

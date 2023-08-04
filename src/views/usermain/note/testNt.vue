@@ -56,28 +56,19 @@
             <template v-slot:right>
                 <split-pane :min="230" class="doc-aside">
                     <template v-slot:left>
-
                         <el-scrollbar height="calc(93.5vh)">
-
-                            <el-menu class="doc-menu" :default-active="String(docId)">
+                            <el-menu class="doc-menu" router>
                                 <el-input placeholder="搜索" v-model="searchKeyWord" :prefix-icon="Search"
                                     @keydown.enter="init()" @clear="init()" clearable>
                                 </el-input>
-                                <el-button type="primary" class="doc-btn" @click="dialogVisible = true"
-                                    :disabled="newBtnStatus">
-                                    <el-icon>
-                                        <Plus />
-                                    </el-icon>
-                                    &nbsp;新建
-                                </el-button>
+                                <div>
+                                </div>
 
                                 <div v-for="item, index in docList" :key="index">
-                                    <el-menu-item :index="String(item.id)" @click="turnTo(item.id)"
-                                        v-if="item.remark == ''">
+                                    <el-menu-item :index="'/index/noteList/' + item.id" v-if="item.remark == ''">
                                         {{ item.title }}
                                     </el-menu-item>
-                                    <el-menu-item :index="String(item.id)" @click="turnTo(item.id)"
-                                        v-else-if="item.remark !== ''">
+                                    <el-menu-item :index="'/index/noteList/' + item.id" v-else-if="item.remark !== ''">
                                         {{ item.remark }}
                                     </el-menu-item>
                                 </div>
@@ -88,15 +79,14 @@
                                     :pager-count="5" :total="pagination.total" @current-change="handleCurrentChange" small
                                     @size-change="handleSizeChange">
                                 </el-pagination>
+
+
                             </el-menu>
                         </el-scrollbar>
                     </template>
 
                     <template v-slot:right>
-
-                        <MarkdownFile :id="docId" @update:change="init" @update:editing="toedit" @delete="deleteGet">
-                        </MarkdownFile>
-
+                        <RouterView @update:change="init" @update:editing="toedit" @update:outline="getOutline" />
                         <el-dialog v-model="dialogVisible" :close-on-click-modal="false" :show-close="false" title="文档"
                             width="30%">
                             <el-form ref="ruleForm" :model="form" :rules="rules" label-width="120px">
@@ -160,45 +150,32 @@ import { ref, reactive, watch, onMounted } from 'vue'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import splitPane from "../../../components/markdown/SplitPane.vue"
-import MarkdownFile from './MarkdownFile.vue';
-
-// 加载
 const loading = ref(false)
-
-// 文档列表
+const items = ref()
 const docList = ref()
 const store = useStore()
 
-// 搜索：权限
 const searchRole = ref(255)
-// 搜索：是否删除
 const searchIsDelete = ref(0)
-// 搜索： 关键词
 const searchKeyWord = ref('')
-// 搜索：组
 const searchTags = ref('')
-// 搜索：用户组
 const searchGroup = ref('')
-// 是否可新建 按钮 禁用
 const folderVisible = ref(false)
-// 文件夹名称
+
 const folderName = ref()
-// 用户信息
 const user = ref({})
 user.value = store.getters.getUserInfo
-// 用户权限
+// console.log(user.value.noteTags)
 const role = ref('')
 role.value = store.getters.getRole
-// 右击菜单
+const search = ref("")
+const file = ref(null)
 const contentMeneFlag = ref(false)
-// 文件夹
+const menuFlag = ref(0)
 const tagOptions = ref()
 tagOptions.value = user.value.noteTags
-// 用户组
 const userGroup = ref({})
-// 分页
-const menuFlag = ref(0)
-// 分页
+
 const pagination = ref({
     currentPage: 1,//当前页码
     pageSize: 13,//每页显示的记录数
@@ -208,28 +185,21 @@ const pagination = ref({
     name: "",
     description: ""
 })
-// 分页：页码
+
 const handleCurrentChange = (currentPage) => {
     //修改页码值为选中页码值
     pagination.value.currentPage = currentPage;
     //执行查询
     init();
 }
-// 分页： 大小
+
 const handleSizeChange = (val) => {
     pagination.value.pageSize = val
     pagination.value.currentPage = 1
     init();
 }
-// 文件ID
-const docId = ref(0)
-docId.value = store.getters.getDocId
-// 文件跳转
-const turnTo = (id) => {
-    docId.value = id
-    store.commit("saveDocId", id)
-}
-// 创建文档规则
+
+
 const ruleForm = ref()
 const form = ref({
     title: "",
@@ -253,11 +223,11 @@ const rules = ref({
 
 })
 
-// 创建文件夹规则
 const folderRuleForm = ref()
 const folderForm = ref({
     name: "",
 })
+
 const folderRules = ref({
     name: [
         {
@@ -274,12 +244,26 @@ const folderRules = ref({
 })
 
 
-// 按钮禁用
+
 const dialogVisible = ref(false)
 
-// 新建类型按钮禁用
+const disabledOutline = ref(true)
+
 const newBtnStatus = ref(false)
 
+const outlineMenu = ref([])
+
+// 获取大纲
+const getOutline = (val) => {
+    outlineMenu.value = val
+    // if(outlineMenu.value == ""){
+    disabledOutline.value = false
+    // }
+    // else {
+    //     disabledOutline.value=false
+    // }
+    //   emit("update:outline", val)
+}
 
 // 初始化
 const init = () => {
@@ -310,61 +294,15 @@ const init = () => {
         pagination.value.currentPage = resp.data.current
         pagination.value.pageSize = resp.data.size
         pagination.value.total = resp.data.total
-
-        dialogVisible.value = false
+        // dialogVisible.value = false
+        // items.value = resp.data
         docList.value = resp.data.records
-        form.value.title = null;
-        if (docId.value === 0) {
-            turnTo(docList.value[0].id)
-        }
+
+        // form.value.name = null;
     }).catch((err) => {
         ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
     })
 }
-
-// 删除后跳转
-const deleteGet = () => {
-
-    user.value = store.getters.getUserInfo
-    let url = ""
-    url += "/api/note/noteList?role=" + searchRole.value
-    if (searchIsDelete.value !== 0) {
-        url += "&isDelete=" + searchIsDelete.value
-    }
-    if (searchKeyWord.value !== "") {
-        url += "&keyword=" + searchKeyWord.value
-    }
-    if (searchTags.value !== "") {
-        url += "&tag=" + searchTags.value
-    }
-    if (searchGroup.value !== "") {
-        url += "&group=" + searchGroup.value
-    }
-    if (pagination.value.currentPage) {
-        url += "&page=" + pagination.value.currentPage
-    }
-    if (pagination.value.pageSize) {
-        url += "&limit=" + pagination.value.pageSize
-    }
-
-
-    axios.get(url).then((resp) => {
-        pagination.value.currentPage = resp.data.current
-        pagination.value.pageSize = resp.data.size
-        pagination.value.total = resp.data.total
-
-        dialogVisible.value = false
-        docList.value = resp.data.records
-        form.value.title = null;
-
-        turnTo(docList.value[0].id)
-    }).catch((err) => {
-        ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
-    })
-
-
-}
-
 
 const getUserGroup = () => {
     let url = "/api/userGroup/list?role=255"
@@ -386,7 +324,7 @@ onMounted(() => {
 
 // 进入编辑状态
 const toedit = (val) => {
-
+    // console.log(val)
     newBtnStatus.value = val
 }
 
@@ -404,29 +342,25 @@ const create = () => {
             form.value.tags = form.value.tags.toString()
             axios.post("/api/note/create", form.value).then((resp) => {
                 init()
+                ruleForm.value.resetFields()
+                loading.value = false
                 dialogVisible.value = false
                 if (resp.data.tags != "") {
                     user.value.noteTags = resp.data.tags
                     tagOptions.value = resp.data.tags
                     store.commit("saveNoteTags", user.value.noteTags)
                 }
-
-                turnTo(resp.data.id)
-                ruleForm.value.resetFields()
-
                 ElMessage.success({ message: "新建成功", duration: 1000, showClose: true })
             }).catch((err) => {
-                ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
-            }).finally(() => {
                 loading.value = false
-
+                ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
             })
         }
     })
 }
 
 
-// 创建文件夹
+// 创建文档
 const createFolder = () => {
     folderRuleForm.value.validate((valid) => {
         if (valid) {
@@ -461,6 +395,23 @@ onBeforeRouteUpdate((to, from) => { // 监听路由变化
     activeIndex.value = to.fullPath
     init()
 })
+
+
+const docFlag = ref()
+docFlag.value = store.getters.getDocChange
+
+watch(docFlag, (newVal, oldVal) => {
+    // console.log(newVal)
+})
+
+// 大纲缩进
+const getOutlineTitle = (item) => {
+    var text = ""
+    for (var i = 1; i < item.level; i++) {
+        text += "\xa0\xa0\xa0\xa0"
+    }
+    return text + item.text
+}
 
 </script>
 

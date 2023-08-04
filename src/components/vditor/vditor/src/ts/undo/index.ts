@@ -25,6 +25,7 @@ class Undo {
 
     constructor() {
         this.resetStack();
+        // wqt - 修复问题
         this.dmp = new DiffMatchPatch.diff_match_patch();
     }
 

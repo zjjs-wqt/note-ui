@@ -4,7 +4,8 @@
   
 <script setup>
 import Vditor from './vditor/src/index.ts'
-import { onMounted, onUnmounted, ref, watch, } from 'vue';
+// import "vditor/dist/index.css";
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { ElLoading, ElMessage } from "element-plus";
 import { useStore } from 'vuex';
@@ -16,7 +17,6 @@ const props = defineProps({
     // 内容
     content: {
         type: String,
-
     },
     // 文档ID
     id: {
@@ -119,7 +119,6 @@ const init = () => {
                 className: "preview_css",
             }
         ],
-       
         input: (val) => {
             emit("update:content", val)
         },

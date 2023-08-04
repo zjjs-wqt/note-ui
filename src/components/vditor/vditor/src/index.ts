@@ -83,6 +83,7 @@ class Vditor extends VditorMethod {
                 addScript(`${mergedOptions.cdn}/dist/js/i18n/${mergedOptions.lang}.js`, i18nScriptID).then(() => {
                     this.init(id as HTMLElement, mergedOptions);
                 });
+                
             }
         } else {
             window.VditorI18n = mergedOptions.i18n;
