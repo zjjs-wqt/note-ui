@@ -57,6 +57,7 @@ const init = () => {
 // 退出登录
 const logout = () => {
     axios.delete("/api/logout").then((resp) => {
+        store.commit("saveDocId", 0)
         router.push({
             path: "/"
         })

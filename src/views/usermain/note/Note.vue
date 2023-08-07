@@ -63,13 +63,7 @@
                                 <el-input placeholder="搜索" v-model="searchKeyWord" :prefix-icon="Search"
                                     @keydown.enter="init()" @clear="init()" clearable>
                                 </el-input>
-                                <el-button type="primary" class="doc-btn" @click="dialogVisible = true"
-                                    :disabled="newBtnStatus">
-                                    <el-icon>
-                                        <Plus />
-                                    </el-icon>
-                                    &nbsp;新建
-                                </el-button>
+
 
                                 <div v-for="item, index in docList" :key="index">
                                     <el-menu-item :index="String(item.id)" @click="turnTo(item.id)"
@@ -82,8 +76,7 @@
                                     </el-menu-item>
                                 </div>
 
-                                <el-pagination v-if="menuFlag == 0" style="margin-top: 15px ;margin-left: 15px;"
-                                    class="pagiantion" :current-page="pagination.currentPage"
+                                <el-pagination class="pagiantion" :current-page="pagination.currentPage"
                                     :page-size="pagination.pageSize" :page-sizes="[10]" layout="total,  prev, pager, next"
                                     :pager-count="5" :total="pagination.total" @current-change="handleCurrentChange" small
                                     @size-change="handleSizeChange">
@@ -197,11 +190,9 @@ tagOptions.value = user.value.noteTags
 // 用户组
 const userGroup = ref({})
 // 分页
-const menuFlag = ref(0)
-// 分页
 const pagination = ref({
     currentPage: 1,//当前页码
-    pageSize: 13,//每页显示的记录数
+    pageSize: 14,//每页显示的记录数
     total: 0, //总记录数
 
     userName: "",
@@ -477,6 +468,8 @@ onBeforeRouteUpdate((to, from) => { // 监听路由变化
 .doc-menu {
     min-height: calc(93.5vh);
     height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .doc-btn {
@@ -495,6 +488,12 @@ onBeforeRouteUpdate((to, from) => { // 监听路由变化
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+}
+
+.pagiantion {
+    margin-top: auto;
+    display: flex;
+    justify-content: center;
 }
 
 /* .doc-outline-btn{

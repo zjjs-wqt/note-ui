@@ -4,10 +4,10 @@
             <h2 v-if="editState == false && noteInfo.remark == '' && remarkStatus == false">{{ noteInfo.title }}</h2>
             <h2 v-else-if="editState == false && noteInfo.remark !== '' && remarkStatus == false"> {{ noteInfo.remark }}
             </h2>
-            <el-input v-model="noteInfo.title" class="md-input" 
+            <el-input v-model="noteInfo.title" class="md-input"
                 v-else-if="editState == true && noteInfo.role == 0"></el-input>
             <div v-else-if="(editState == true && noteInfo.role !== 0) || remarkStatus == true" style="display: flex;">
-                <el-input v-model="noteInfo.remark" class="md-input" ></el-input>
+                <el-input v-model="noteInfo.remark" class="md-input"></el-input>
                 <div class="md-update-time" style="color:#909399;">{{ noteInfo.title }}</div>
             </div>
 
@@ -515,7 +515,7 @@ watch(props, (newVal, oldVal) => {
             formData.append("title", noteInfo.value.title)
             formData.append("remark", noteInfo.value.remark)
             axios.post("/api/note/content", formData).then((resp) => {
-                ElMessage.info({ message: "修改成功", duration: 1000, showClose: true })
+                ElMessage.success({ message: "修改成功", duration: 1000, showClose: true })
                 id.value = newVal.id
                 editState.value = false
                 remarkStatus.value = false
@@ -556,7 +556,9 @@ const toDelete = () => {
             loading.value = true
             axios.delete("/api/note/delete?id=" + noteInfo.value.id).then((resp) => {
                 ElMessage.success({ message: "删除成功", duration: 2000, showClose: true })
-                emit("update:change", true)
+                // emit("update:change", true)
+                store.commit("saveDocId", 0)
+                emit("delete")
                 init()
                 loading.value = false
             }).catch((err) => {
@@ -721,7 +723,7 @@ const leaveSave = () => {
             formData.append("title", noteInfo.value.title)
             formData.append("remark", noteInfo.value.remark)
             axios.post("/api/note/content", formData).then((resp) => {
-                ElMessage.info({ message: "修改成功", duration: 1000, showClose: true })
+                ElMessage.success({ message: "修改成功", duration: 1000, showClose: true })
                 btnStatus.value = false
             }).catch((err) => {
                 ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
@@ -784,5 +786,4 @@ onUnmounted(() => {
     padding-left: 10px;
     padding-top: 23px;
 }
-
 </style>
