@@ -1,18 +1,18 @@
-import { Constants } from "../constants";
-import { processHeading } from "../ir/process";
-import { processHeading as processHeadingSV } from "../sv/process";
-import { getEventName, updateHotkeyTip } from "../util/compatibility";
-import { afterRenderEvent } from "../wysiwyg/afterRenderEvent";
-import { removeHeading, setHeading } from "../wysiwyg/setHeading";
-import { MenuItem } from "./MenuItem";
-import { hidePanel } from "./setToolbar";
+import {Constants} from "../constants";
+import {processHeading} from "../ir/process";
+import {processHeading as processHeadingSV} from "../sv/process";
+import {getEventName, updateHotkeyTip} from "../util/compatibility";
+import {afterRenderEvent} from "../wysiwyg/afterRenderEvent";
+import {removeHeading, setHeading} from "../wysiwyg/setHeading";
+import {MenuItem} from "./MenuItem";
+import {hidePanel} from "./setToolbar";
 
 export class Headings extends MenuItem {
-    public element: HTMLElement;
+    // public element: HTMLElement;
 
     constructor(vditor: IVditor, menuItem: IMenuItem) {
         super(vditor, menuItem);
-                
+
         const panelElement = document.createElement("div");
         panelElement.className = "vditor-hint vditor-panel--arrow";
         panelElement.innerHTML = `<button data-tag="h1" data-value="# ">${window.VditorI18n.heading1} ${updateHotkeyTip("&lt;⌥⌘1>")}</button>

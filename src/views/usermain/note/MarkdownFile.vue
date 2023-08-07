@@ -511,12 +511,12 @@ watch(props, (newVal, oldVal) => {
             let formData = new FormData()
             formData.append("id", id.value)
             formData.append("content", vditorRef.value.getValue())
-            formData.append("autoSave", "true")
+            formData.append("autoSave", "false")
             formData.append("title", noteInfo.value.title)
             formData.append("remark", noteInfo.value.remark)
             axios.post("/api/note/content", formData).then((resp) => {
                 ElMessage.info({ message: "修改成功", duration: 1000, showClose: true })
-                id.value = Number(to.params.id)
+                id.value = newVal.id
                 editState.value = false
                 remarkStatus.value = false
                 init()
@@ -708,9 +708,33 @@ const cancel = () => {
 }
 
 
+// 自动保存
+const leaveSave = () => {
+    // 内容发生修改，自动修改
+    if (editState.value == true) {
+        setTimeout(() => {
+            btnStatus.value = true
+            let formData = new FormData()
+            formData.append("id", id.value)
+            formData.append("content", content.value)
+            formData.append("autoSave", "false")
+            formData.append("title", noteInfo.value.title)
+            formData.append("remark", noteInfo.value.remark)
+            axios.post("/api/note/content", formData).then((resp) => {
+                ElMessage.info({ message: "修改成功", duration: 1000, showClose: true })
+                btnStatus.value = false
+            }).catch((err) => {
+                ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
+                btnStatus.value = false
+            })
+            // editState.value = false
+        }, 300)
+    }
+}
+
 // 离开页面，自动保存
 onUnmounted(() => {
-    timeSave()
+    leaveSave()
     if (timer) { //如果定时器还在运行 或者直接关闭，不用判断
         clearInterval(timer); //关闭
     }
@@ -724,7 +748,7 @@ onUnmounted(() => {
 .md-body {
     display: flex;
     padding: 8px;
-    /* max-height: 85px; */
+    height: 65px;
 }
 
 

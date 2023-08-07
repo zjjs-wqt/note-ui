@@ -6,7 +6,7 @@ import {MenuItem} from "./MenuItem";
 import {toggleSubMenu} from "./setToolbar";
 
 export class Emoji extends MenuItem {
-    public element: HTMLElement;
+    // public element: HTMLElement;
 
     constructor(vditor: IVditor, menuItem: IMenuItem) {
         super(vditor, menuItem);

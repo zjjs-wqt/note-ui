@@ -149,7 +149,7 @@ export const setEditMode = (vditor: IVditor, type: string, event: Event | string
 };
 
 export class EditMode extends MenuItem {
-    public element: HTMLElement;
+    // public element: HTMLElement;
 
     constructor(vditor: IVditor, menuItem: IMenuItem) {
         super(vditor, menuItem);
