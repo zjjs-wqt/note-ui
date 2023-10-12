@@ -681,6 +681,7 @@ const cancel = () => {
     if (noteInfo.value.role == 1) {
         remarkStatus.value = false
         noteInfo.value.remark = remarkBackup.value
+        return
     }
 
     // 锁表单
