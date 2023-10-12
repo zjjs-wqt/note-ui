@@ -233,7 +233,7 @@ const toPreview = () => {
     }
 }
 
-// 隐藏工具栏
+// 隐藏工具栏 显示大纲
 const hideTools = () => {
     if (flag.value === true) {
         const toolbarElement = document.querySelector('.vditor-toolbar');
@@ -245,7 +245,7 @@ const hideTools = () => {
     }
 }
 
-// 显示工具栏
+// 显示工具栏 隐藏大纲
 const showTools = () => {
     if (flag.value === true) {
         const toolbarElement = document.querySelector('.vditor-toolbar');
@@ -272,6 +272,7 @@ const modePreview = () => {
         hideTools()
     }
 }
+
 
 
 

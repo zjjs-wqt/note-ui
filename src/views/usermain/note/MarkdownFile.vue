@@ -283,7 +283,6 @@ const memRemoteMethod = (keyword) => {
 
 const group = ref([])
 const memRemoteMethodForGroup = (keyword) => {
-
     // 1.  参数检查
     if (!keyword) {
         group.value = []
@@ -424,17 +423,22 @@ const init = () => {
     if (id.value === 0) {
         return
     }
-    loading.value = true
     axios.get("/api/note/info?id=" + id.value).then((resp) => {
         noteInfo.value = resp.data
         if (noteInfo.value.noteGroup !== "") {
             noteInfo.value.noteGroup = noteInfo.value.noteGroup.split(",")
         }
+        getContent()
+    }).catch((err) => {
+        ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
+    })
+}
 
-        axios.get("/api/note/content?id=" + noteInfo.value.id).then((resp) => {
+const getContent = () =>{
+    loading.value = true
+    axios.get("/api/note/content?id=" + noteInfo.value.id).then((resp) => {
             content.value = resp.data
             contentTime.value = resp.data
-
             if (perviewFlag.value === true) {
                 perviewFlag.value = false
                 vditorRef.value.setValue(content.value)
@@ -445,9 +449,6 @@ const init = () => {
                 vditorRef.value.setValue(content.value)
                 vditorRef.value.modePreview()
             }
-        }).catch((err) => {
-            ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
-        })
     }).catch((err) => {
         ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
     })
@@ -462,6 +463,7 @@ const initVditor = () => {
 onMounted(() => {
     id.value = props.id
     init()
+
     window.addEventListener('beforeunload', beforeunloadFn)
 })
 
@@ -480,6 +482,10 @@ const beforeunloadFn = (e) => {
 
 // 获取编辑状态
 const changeToEdit = () => {
+
+    // 先获取最新文档
+    getContent()
+    
     // 锁表单
     var lockDto = {}
     lockDto.userId = Number(store.getters.getUserInfo.id)
@@ -498,8 +504,6 @@ const changeToEdit = () => {
         })
     })
 }
-
-
 
 watch(props, (newVal, oldVal) => {
     if (newVal.id !== id.value) {
@@ -656,7 +660,7 @@ const timeSave = () => {
             btnStatus.value = true
             let formData = new FormData()
             formData.append("id", id.value)
-            formData.append("content", content.value)
+            formData.append("content", contentTime.value)
             formData.append("autoSave", "true")
             formData.append("title", noteInfo.value.title)
             formData.append("remark", noteInfo.value.remark)
