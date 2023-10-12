@@ -135,6 +135,7 @@ const init = () => {
             actions: [],
             hljs: {
                 enable: true,
+                lineNumber: true
             },
             parse: (val) => {
                 // 完成渲染
@@ -237,6 +238,10 @@ const hideTools = () => {
     if (flag.value === true) {
         const toolbarElement = document.querySelector('.vditor-toolbar');
         toolbarElement.style.display = 'none';
+        if (vditor.value.getCurrentMode() === 'sv') {
+            const outLineElement = document.querySelector('.vditor-outline');
+            outLineElement.style.display = 'block';
+        }
     }
 }
 
@@ -245,6 +250,10 @@ const showTools = () => {
     if (flag.value === true) {
         const toolbarElement = document.querySelector('.vditor-toolbar');
         toolbarElement.style.display = 'block';
+        if (vditor.value.getCurrentMode() === 'sv') {
+            const outLineElement = document.querySelector('.vditor-outline');
+            outLineElement.style.display = 'none';
+        }
     }
 }
 

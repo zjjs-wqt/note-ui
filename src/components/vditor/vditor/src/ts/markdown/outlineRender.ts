@@ -17,8 +17,8 @@ export const outlineRender = (contentElement: HTMLElement, targetElement: Elemen
             }
             ids.push(item.id);
 
-            // wqt - 保存目录结构
-            let textContent = item.textContent.replace(/\s|#/g, "");
+            // wqt - 保存目录结构  去除标题中的 空格 # 以及 .
+            let textContent = item.textContent.replace(/[\s#\.]/g, "");
             vditor.toc.set(textContent,item.id)
          
             tocHTML += item.outerHTML.replace("<wbr>", "");
@@ -53,9 +53,10 @@ export const outlineRender = (contentElement: HTMLElement, targetElement: Elemen
             if (!document.getElementById("vditorIconScript")) {
                 iconHTML = '<svg class="vditor-outline__action" viewBox="0 0 32 32"><path d="M3.76 6.12l12.24 12.213 12.24-12.213 3.76 3.76-16 16-16-16 3.76-3.76z"></path></svg>';
             }
-            item.innerHTML = `${iconHTML}<span>${item.innerHTML}</span>`;
+            // wqt - 大纲悬浮提示
+            item.innerHTML = `${iconHTML}<span title="${item.innerHTML}">${item.innerHTML}</span>`;
         } else {
-            item.innerHTML = `<svg></svg><span>${item.innerHTML}</span>`;
+            item.innerHTML = `<svg></svg><span title="${item.innerHTML}">${item.innerHTML}</span>`;
         }
         item.setAttribute("data-target-id", ids[index]);
     });

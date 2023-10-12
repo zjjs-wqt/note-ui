@@ -168,8 +168,9 @@
       th {
         padding: 6px 13px;
         border: 1px solid #dfe2e5;
-        word-break: normal;
-        white-space: nowrap;
+        // wqt - 表格文本自动换行
+        word-break: break-word;
+        // white-space: nowrap;
 
         &:first-child::after {
           content: "";
@@ -569,6 +570,8 @@
       color: var(--textarea-text-color);
 
       & > svg {
+        min-height: 10px;
+        min-width: 10px;
         height: 10px;
         width: 10px;
       }

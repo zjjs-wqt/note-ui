@@ -98,7 +98,7 @@ export class Preview {
                     // wqt - 超链接
                     let target = event.target.getAttribute('href');
                     if (target.startsWith("#")) {
-                        target = target.substring(1); // 去除#号
+                        target = target.replace(/[,#-]/g, ""); // 去除标题中的 空格 # 以及 .
                         const toElement = document.getElementById(vditor.toc.get(target))
                         if (toElement) {
                             toElement.scrollIntoView({ behavior: 'smooth' });

@@ -160,7 +160,7 @@ class IR {
                     
                     if (target.startsWith("#")) {
                         // wqt - 超链接
-                        target = target.substring(1); // 去除#号
+                        target = target.replace(/[,#-]/g, ""); // 去除标题中的 - # 以及 ,
                         const toElement = document.getElementById(vditor.toc.get(target))
                         if (toElement) {
                             toElement.scrollIntoView({ behavior: 'smooth' });

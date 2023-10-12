@@ -6,6 +6,7 @@ import {updateHotkeyTip} from "../util/compatibility";
 import {toolbarEvent} from "../wysiwyg/toolbarEvent";
 
 export class MenuItem {
+    // wqt - ??? 子类继承，子类中无法再次定义
     public element: HTMLElement;
 
     constructor(vditor: IVditor, menuItem: IMenuItem) {
