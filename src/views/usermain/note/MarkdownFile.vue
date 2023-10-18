@@ -247,26 +247,36 @@ const persion = ref([])// 成员名称下拉框
 let last = "";
 let current = "";
 
-const memRemoteMethod = (keyword) => {
+const getList = () =>{
+    selectLoading.value = true
+    // 发起请求
+    axios.get("/api/user/nameList").then((resp) => {
+        // 绑定数据
+        persion.value = resp.data
+    }).then(()=>{
+        axios.get("/api/userGroup/list" ).then((resp) => {
+            //  绑定数据
+            group.value = resp.data
+        })
+    }).finally(() => {
+        selectLoading.value = false;
+    })
+}
 
-    // 1.  参数检查
-    if (!keyword) {
-        persion.value = []
-        return
-    }
+const memRemoteMethod = (keyword) => {
     current = keyword;
-    // 2. 判断是否已经再有程序运行
+    // 判断是否已经再有程序运行
     if (last !== "") {
         return
     }
     last = keyword;
     selectLoading.value = true
-    // 3. 发起请求
-    axios.get("/api/user/nameList?keyword=" + keyword).then((resp) => {
-        // 4. 绑定数据
+    // 发起请求
+    axios.get("/api/user/nameList?keyword="+keyword).then((resp) => {
+        // 绑定数据
         persion.value = resp.data
     }).then(() => {
-        // 5. 请求结束后判断最初的查询参数与现在的查询参数是否一致。
+        // 请求结束后判断最初的查询参数与现在的查询参数是否一致。
         if (last === current) {
             return
         }
@@ -283,24 +293,20 @@ const memRemoteMethod = (keyword) => {
 
 const group = ref([])
 const memRemoteMethodForGroup = (keyword) => {
-    // 1.  参数检查
-    if (!keyword) {
-        group.value = []
-        return
-    }
+
     current = keyword;
-    // 2. 判断是否已经再有程序运行
+    // 判断是否已经再有程序运行
     if (last !== "") {
         return
     }
     last = keyword;
     selectLoading.value = true
-    // 3. 发起请求 /api/userGroup/list?role=0&keyword=
+    // 发起请求 /api/userGroup/list?role=0&keyword=
     axios.get("/api/userGroup/list?keyword=" + keyword).then((resp) => {
-        // 4. 绑定数据
+        //  绑定数据
         group.value = resp.data
     }).then(() => {
-        // 5. 请求结束后判断最初的查询参数与现在的查询参数是否一致。
+        //  请求结束后判断最初的查询参数与现在的查询参数是否一致。
         if (last === current) {
             return
         }
@@ -417,12 +423,13 @@ const codeType = ref("note")
 // 保存、删除按钮是否可用
 const btnStatus = ref(false)
 
-const emit = defineEmits(["update:change", "update:editing", "delete"])
+const emit = defineEmits(["update:change", "update:editing", "delete","errId"])
 
 const init = () => {
     if (id.value === 0) {
         return
     }
+    getList()
     axios.get("/api/note/info?id=" + id.value).then((resp) => {
         noteInfo.value = resp.data
         if (noteInfo.value.noteGroup !== "") {
@@ -525,8 +532,10 @@ watch(props, (newVal, oldVal) => {
                 remarkStatus.value = false
                 init()
                 emit("update:change", true)
-
+                emit("update:editing", false)
             }).catch((err) => {
+                remarkStatus.value = false
+                emit("errId",id.value)
                 ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
             })
         }
@@ -535,8 +544,9 @@ watch(props, (newVal, oldVal) => {
             editState.value = false
             remarkStatus.value = false
             init()
+            emit("update:editing", false)
+
         }
-        emit("update:editing", false)
     }
 
 })
@@ -631,13 +641,14 @@ const save = () => {
 
         axios.get("/api/note/info?id=" + id.value).then((resp) => {
             noteInfo.value = resp.data
+            emit("update:editing", false)
         }).catch((err) => {
             ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
         })
     }).catch((err) => {
+        btnStatus.value = false
         ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
     })
-    emit("update:editing", false)
 }
 
 // 解锁
@@ -670,6 +681,7 @@ const timeSave = () => {
             }).catch((err) => {
                 ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
                 btnStatus.value = false
+                cancel()
             })
             // editState.value = false
         }, 300)
@@ -715,7 +727,7 @@ const cancel = () => {
 }
 
 
-// 自动保存
+// 离开页面
 const leaveSave = () => {
     // 内容发生修改，自动修改
     if (editState.value == true) {
@@ -733,6 +745,7 @@ const leaveSave = () => {
             }).catch((err) => {
                 ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
                 btnStatus.value = false
+                cancel()
             })
             // editState.value = false
         }, 300)

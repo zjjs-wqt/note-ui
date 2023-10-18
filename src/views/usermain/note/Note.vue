@@ -87,7 +87,7 @@
 
                     <template v-slot:right>
 
-                        <MarkdownFile :id="docId" @update:change="init" @update:editing="toedit" @delete="deleteGet">
+                        <MarkdownFile :id="docId" @update:change="init" @update:editing="toedit" @delete="deleteGet" @errId="toActive">
                         </MarkdownFile>
 
                         <el-dialog v-model="dialogVisible" :close-on-click-modal="false" :show-close="false" title="文档"
@@ -199,6 +199,7 @@ const pagination = ref({
     name: "",
     description: ""
 })
+
 // 分页：页码
 const handleCurrentChange = (currentPage) => {
     //修改页码值为选中页码值
@@ -368,6 +369,9 @@ const getUserGroup = () => {
     });
 }
 
+const toActive = (val) =>{
+    docId.value = val
+}
 
 onMounted(() => {
     init()
