@@ -130,6 +130,7 @@ const init = () => {
         },
         typewriterMode: true,
         mode: mode,
+        cdn:"/ui/vditor",
         preview: {
             mode: "both",
             actions: [],
@@ -257,6 +258,20 @@ const showTools = () => {
     }
 }
 
+
+// 隐藏大纲
+const hideToc = () =>{
+    const outLineElement = document.querySelector('.vditor-outline');
+    outLineElement.style.display = 'none';
+}
+
+// 显示大纲
+const showToc = () =>{
+    const outLineElement = document.querySelector('.vditor-outline');
+    outLineElement.style.display = 'block';
+}
+
+
 // 编辑模式
 const modeEdit = () => {
     if (flag.value === true) {
@@ -285,7 +300,9 @@ defineExpose({
     hideTools,
     showTools,
     modeEdit,
-    modePreview
+    modePreview,
+    hideToc,
+    showToc
 })
 
 </script>
@@ -296,6 +313,9 @@ defineExpose({
     color: black;
 }
 
+.vd :deep(.vditor-preview::-webkit-scrollbar) {
+    display: flex;
+}
 
 .vd :deep(.preview_css) {
     display: none;

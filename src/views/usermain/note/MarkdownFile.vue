@@ -1,29 +1,43 @@
 <template>
     <div v-loading="loading" element-loading-background="rgba(255, 255, 255, 0.8)" element-loading-text="数据加载中...">
         <div class="md-body">
+            <!-- 显示/隐藏大纲 -->
+            <el-button style="margin:16px 5px 0 5px;height:32px;font-size:15px" @click="changeOutline" link
+                v-if="editState == false && noteInfo.isDelete == 0 && outlineFlag" :icon="View" title="隐藏大纲"></el-button>
+            <el-button style="margin:16px 5px 0 5px;height:32px;font-size:15px" @click="changeOutline" link
+                v-else-if="editState == false && noteInfo.isDelete == 0 && !outlineFlag" :icon="Hide"
+                title="显示大纲"></el-button>
+            <!-- 显示备注 还是 名称 -->
             <h2 v-if="editState == false && noteInfo.remark == '' && remarkStatus == false">{{ noteInfo.title }}</h2>
             <h2 v-else-if="editState == false && noteInfo.remark !== '' && remarkStatus == false"> {{ noteInfo.remark }}
             </h2>
+            <!-- 修改备注 或名称 -->
             <el-input v-model="noteInfo.title" class="md-input"
                 v-else-if="editState == true && noteInfo.role == 0"></el-input>
             <div v-else-if="(editState == true && noteInfo.role !== 0) || remarkStatus == true" style="display: flex;">
                 <el-input v-model="noteInfo.remark" class="md-input"></el-input>
                 <div class="md-update-time" style="color:#909399;">{{ noteInfo.title }}</div>
             </div>
-
+            <!-- 笔记拥有者名称 -->
             <h4 v-if="editState == false" style="padding-left: 15px;color:#909399;">{{ noteInfo.userName }}</h4>
+            <!-- 笔记更新时间 -->
             <div class="md-update-time" v-if="id !== 0">
                 更新时间：{{ noteInfo.updatedAt }}
             </div>
+            <!-- 导出笔记 -->
             <el-button type="success" style="margin-top: 16px;margin-left: 5px;" @click="exportDoc" :disabled="exportStatus"
                 v-if="(noteInfo.role == 0 || noteInfo.role == 2) && editState == false && noteInfo.isDelete == 0">导出</el-button>
+            <!-- 分享笔记 -->
             <el-button type="primary" style="margin-top: 16px;margin-left: 5px;" @click="dialogVisible = true"
                 v-if="noteInfo.role == 0 && editState == false && noteInfo.isDelete == 0">分享</el-button>
+            <!-- 已分享 -->
             <el-button type="warning" style="margin-top: 16px;margin-left: 5px;"
                 @click="sharedVisible = true; getShareList()"
                 v-if="noteInfo.role == 0 && editState == false && noteInfo.isDelete == 0">已分享</el-button>
+            <!-- 文件夹 -->
             <el-button type="info" style="margin-top: 16px;margin-left: 5px;" @click="groupVisible = true"
                 v-if="editState == false && noteInfo.isDelete == 0">保存至</el-button>
+            <!-- 编辑状态 - 未编辑 -->
             <div class="md-btn-group" v-if="editState == false">
                 <div class="md-btn">
                     <el-button type="primary" style="margin-top:5px;" @click="changeToEdit"
@@ -37,27 +51,25 @@
                 <div class="md-btn">
                     <el-button type="primary" style="margin-top:5px;"
                         @click="remarkStatus = true; remarkBackup = noteInfo.remark"
-                        v-if="noteInfo.role == 1 && remarkStatus == false">修改备注</el-button>
+                        v-if="noteInfo.role == 1 && remarkStatus == false &&  noteInfo.isDelete == 0">修改备注</el-button>
                     <el-button v-if="remarkStatus == true" style="margin-top:5px;" :disabled="btnStatus"
                         @click="cancel">取消</el-button>
                     <el-button @click="save" type="warning" style="margin-top:5px;" :disabled="btnStatus"
                         v-if="remarkStatus == true">保存</el-button>
                 </div>
             </div>
+            <!-- 编辑状态 - 已编辑 -->
             <div class="md-btn-group" v-else>
-
                 <div class="md-btn">
                     <el-button :disabled="btnStatus" @click="cancel">取消</el-button>
                     <el-button @click="save" type="warning" :disabled="btnStatus">保存</el-button>
                 </div>
             </div>
         </div>
-        <!-- <Markdown :content="content" :pattern="pattern" :codeType="codeType" :id="id" @update:content="update"
-            @update:ctState="changeState" @update:ctrlSave="timeSave" @update:outline="getOutline"
-            :class="[pattern === 2 && editState === true ? 'md-pattern' : '']"></Markdown> -->
 
         <Vditor :content="content" ref="vditorRef" @init="initVditor" @loading="loading = false" :id="id"
-            :codeType="codeType" @update:ctrlSave="timeSave" @update:content="saveContent"></Vditor>
+            :codeType="codeType" @update:ctrlSave="timeSave" @update:content="saveContent" :height="'calc(100vh - 160px)'">
+        </Vditor>
 
 
         <el-dialog v-model="dialogVisible" :close-on-click-modal="false" :show-close="false" title="分享" width="30%">
@@ -115,19 +127,24 @@
             </template>
         </el-dialog>
 
+        <el-dialog v-model="groupVisible" v-if="groupVisible" :close-on-click-modal="false" :show-close="false" title="保存至" width="30%">
 
-        <el-dialog v-model="groupVisible" :close-on-click-modal="false" :show-close="false" title="笔记" width="30%">
             <el-form label-width="120px">
-                <el-form-item label="文件夹" prop="tags" style="width: 80%;">
-                    <el-select v-model="noteInfo.noteGroup" placeholder="保存至" filterable default-first-option allow-create
-                        style="width:350px">
-                        <el-option v-for="item in tagOptions" :key="item" :label="item" :value="item" />
-                    </el-select>
+                <el-form-item label="当前文件夹" style="width: 80%;">
+                    <div >
+                        {{user.name}} 
+                    </div>/
+                    <div>
+                        {{ noteInfo.folderName }}
+                    </div>
+                </el-form-item>
+                <el-form-item label="文件夹" prop="folder" style="width: 80%;" >
+                    <el-cascader v-model="changeGroupId" :props="folderProps" clearable filterable style="width:320px" />
                 </el-form-item>
             </el-form>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button @click="groupVisible = false;">
+                    <el-button @click="groupVisible = false;changeGroupId=null">
                         取消
                     </el-button>
                     <el-button type="primary" @click="changeGroup">提交</el-button>
@@ -177,7 +194,7 @@
 </template>
 
 <script setup>
-
+import { View, Hide } from '@element-plus/icons-vue'
 import axios from 'axios';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { onUnmounted, ref, h, watch, onMounted } from 'vue';
@@ -185,37 +202,58 @@ import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router'
 import { useStore } from 'vuex';
 
 import Vditor from '../../../components/vditor/Vditor.vue';
-
+// 显示/隐藏 大纲
+const outlineFlag = ref(true)
+// 编辑器
 const vditorRef = ref()
-const textarea = ref('')
+// 笔记信息
 const noteInfo = ref({})
+// 存储信息
 const store = useStore()
+// 笔记内容
 const content = ref('')
-const router = useRoute()
+// 加载
 const loading = ref(false)
+// 弹窗加载
 const selectLoading = ref(false)
+// 导出笔记按钮
 const exportStatus = ref(false)
+// 备注按钮
 const remarkStatus = ref(false)
+// 分享弹框
 const dialogVisible = ref(false)
+// 已分享弹框
 const sharedVisible = ref(false)
+// 保存至文件夹弹窗
 const groupVisible = ref(false)
+// 已分享 划窗
 const activeName = ref('user')
-const tagOptions = ref()
+// 文件夹列表
+const folderList = ref()
+// 用户信息
 const user = ref({})
 user.value = store.getters.getUserInfo
-tagOptions.value = user.value.noteTags
+// 文件id
 const props = defineProps({
     id: Number
 })
+// 文件ID
 const id = ref(0)
+// 备注-备份
 const remarkBackup = ref('')
+// 定时保存内容
 const contentTime = ref()
+// 预览模式/编辑模式
 const perviewFlag = ref(false)
 // 定时保存
 const saveContent = (val) => {
     contentTime.value = val
 }
+// 保存文件夹id
+const folderId = ref(null)
+// 权限描述
 const roleList = ["笔记拥有者", "可查看", "可编辑"]
+// 分享
 const form = ref({
     type: "user",
     userId: "",
@@ -247,14 +285,15 @@ const persion = ref([])// 成员名称下拉框
 let last = "";
 let current = "";
 
-const getList = () =>{
+// 获取用户列表以及该用户的用户组信息
+const getList = () => {
     selectLoading.value = true
     // 发起请求
     axios.get("/api/user/nameList").then((resp) => {
         // 绑定数据
         persion.value = resp.data
-    }).then(()=>{
-        axios.get("/api/userGroup/list" ).then((resp) => {
+    }).then(() => {
+        axios.get("/api/userGroup/list").then((resp) => {
             //  绑定数据
             group.value = resp.data
         })
@@ -263,6 +302,7 @@ const getList = () =>{
     })
 }
 
+// 查询用户
 const memRemoteMethod = (keyword) => {
     current = keyword;
     // 判断是否已经再有程序运行
@@ -272,7 +312,7 @@ const memRemoteMethod = (keyword) => {
     last = keyword;
     selectLoading.value = true
     // 发起请求
-    axios.get("/api/user/nameList?keyword="+keyword).then((resp) => {
+    axios.get("/api/user/nameList?keyword=" + keyword).then((resp) => {
         // 绑定数据
         persion.value = resp.data
     }).then(() => {
@@ -291,6 +331,7 @@ const memRemoteMethod = (keyword) => {
     })
 }
 
+// 查询用户组
 const group = ref([])
 const memRemoteMethodForGroup = (keyword) => {
 
@@ -321,24 +362,9 @@ const memRemoteMethodForGroup = (keyword) => {
     })
 }
 
-const changeGroup = () => {
-    axios.get("/api/note/group?id=" + id.value + "&group=" + noteInfo.value.noteGroup).then((resp) => {
 
-        if (resp.data != "") {
-            user.value.noteTags = resp.data
-            tagOptions.value = resp.data
-            store.commit("saveNoteTags", user.value.noteTags)
-            emit("update:change", true)
-        }
-        ElMessage.success({ message: "修改成功", duration: 1000, showClose: true })
-    }).catch((err) => {
-        // loading.value = false
-        ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
-    }).finally(() => {
-        groupVisible.value = false
-    })
-}
 
+// 分享
 const share = () => {
     let shareForm = {}
     if (form.value.type == "user") {
@@ -361,6 +387,7 @@ const share = () => {
     })
 }
 
+// 取消分享
 const unshare = (info, t) => {
     ElMessageBox.confirm(
         h('p', null, [
@@ -391,12 +418,21 @@ const unshare = (info, t) => {
 
 }
 
+// 显示、隐藏大纲
+const changeOutline = () => {
+    if (outlineFlag.value) {
+        vditorRef.value.hideToc()
+    } else {
+        vditorRef.value.showToc()
+    }
+    outlineFlag.value = !outlineFlag.value
+}
 
 
 const userList = ref([])
 const groupList = ref([])
 
-
+// 获取分享信息
 const getShareList = () => {
     if (id.value === 0) {
         return
@@ -423,39 +459,62 @@ const codeType = ref("note")
 // 保存、删除按钮是否可用
 const btnStatus = ref(false)
 
-const emit = defineEmits(["update:change", "update:editing", "delete","errId"])
+const emit = defineEmits(["update:change", "update:editing", "delete", "errId"])
 
+// 初始化
 const init = () => {
     if (id.value === 0) {
         return
     }
     getList()
+    // 获取文档相关信息
     axios.get("/api/note/info?id=" + id.value).then((resp) => {
         noteInfo.value = resp.data
-        if (noteInfo.value.noteGroup !== "") {
-            noteInfo.value.noteGroup = noteInfo.value.noteGroup.split(",")
+        folderId.value = null
+        if (noteInfo.value.folderId !== 0) {
+            folderId.value = noteInfo.value.folderId
         }
         getContent()
     }).catch((err) => {
         ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
     })
+
 }
 
-const getContent = () =>{
+
+// 获取笔记信息
+const getNoteInfo = () => {
+    axios.get("/api/note/info?id=" + id.value).then((resp) => {
+        noteInfo.value = resp.data
+        if (noteInfo.value.folderId !== 0) {
+            folderId.value = noteInfo.value.folderId
+        }
+    }).catch((err) => {
+        ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
+    })
+}
+
+
+
+
+
+// 获取文档内容
+const getContent = () => {
+
     loading.value = true
     axios.get("/api/note/content?id=" + noteInfo.value.id).then((resp) => {
-            content.value = resp.data
-            contentTime.value = resp.data
-            if (perviewFlag.value === true) {
-                perviewFlag.value = false
-                vditorRef.value.setValue(content.value)
-                vditorRef.value.modePreview()
-            } else {
-                // 先解除预览模式，将值注入后再换为预览模式
-                vditorRef.value.toPreview()
-                vditorRef.value.setValue(content.value)
-                vditorRef.value.modePreview()
-            }
+        content.value = resp.data
+        contentTime.value = resp.data
+        if (perviewFlag.value === true) {
+            perviewFlag.value = false
+            vditorRef.value.setValue(content.value)
+            vditorRef.value.modePreview()
+        } else {
+            // 先解除预览模式，将值注入后再换为预览模式
+            vditorRef.value.toPreview()
+            vditorRef.value.setValue(content.value)
+            vditorRef.value.modePreview()
+        }
     }).catch((err) => {
         ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
     })
@@ -470,10 +529,11 @@ const initVditor = () => {
 onMounted(() => {
     id.value = props.id
     init()
-
     window.addEventListener('beforeunload', beforeunloadFn)
 })
 
+
+// 离开页面提示
 const beforeunloadFn = (e) => {
     e = e || window.event;
     if (editState.value === true) {
@@ -491,27 +551,44 @@ const beforeunloadFn = (e) => {
 const changeToEdit = () => {
 
     // 先获取最新文档
-    getContent()
-    
-    // 锁表单
-    var lockDto = {}
-    lockDto.userId = Number(store.getters.getUserInfo.id)
-    lockDto.id = String(id.value)
+    loading.value = true
+    axios.get("/api/note/content?id=" + noteInfo.value.id).then((resp) => {
+        content.value = resp.data
+        contentTime.value = resp.data
+        if (perviewFlag.value === true) {
+            perviewFlag.value = false
+            vditorRef.value.setValue(content.value)
+            vditorRef.value.modePreview()
+        } else {
+            // 先解除预览模式，将值注入后再换为预览模式
+            vditorRef.value.toPreview()
+            vditorRef.value.setValue(content.value)
+            vditorRef.value.modePreview()
+        }
+        // 锁表单
+        var lockDto = {}
+        lockDto.userId = Number(store.getters.getUserInfo.id)
+        lockDto.id = String(id.value)
 
-    // 获取锁信息
-    axios.post("/api/note/lock", lockDto).then((resp) => {
-        editState.value = true
-        // 进入编辑模式
-        vditorRef.value.modeEdit()
-        emit("update:editing", true)
-    }).catch((err) => {
-        ElMessageBox.alert(err.response.data, '提示', {
-            confirmButtonText: '确定',
-            type: 'error',
+        // 获取锁信息
+        axios.post("/api/note/lock", lockDto).then((resp) => {
+            editState.value = true
+            // 进入编辑模式
+            vditorRef.value.modeEdit()
+            emit("update:editing", true)
+        }).catch((err) => {
+            ElMessageBox.alert(err.response.data, '提示', {
+                confirmButtonText: '确定',
+                type: 'error',
+            })
         })
+    }).catch((err) => {
+        ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
     })
+
 }
 
+// 检查文档是否跳转
 watch(props, (newVal, oldVal) => {
     if (newVal.id !== id.value) {
         if (editState.value == true) {
@@ -535,7 +612,7 @@ watch(props, (newVal, oldVal) => {
                 emit("update:editing", false)
             }).catch((err) => {
                 remarkStatus.value = false
-                emit("errId",id.value)
+                emit("errId", id.value)
                 ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
             })
         }
@@ -552,6 +629,7 @@ watch(props, (newVal, oldVal) => {
 })
 
 
+// 删除笔记
 const toDelete = () => {
     ElMessageBox.confirm(
         h('p', null, [
@@ -583,6 +661,7 @@ const toDelete = () => {
 
 }
 
+// 恢复笔记
 const toRestore = () => {
     ElMessageBox.confirm(
         h('p', null, [
@@ -621,7 +700,7 @@ const exportDoc = () => {
     }, 3 * 1000);
 }
 
-// 保存项目阶段
+// 保存笔记
 const save = () => {
     let formData = new FormData()
     formData.append("id", id.value)
@@ -658,10 +737,44 @@ const unlock = () => {
 
 // 定时任务 -- 5分钟一次自动保存
 const timer = setInterval(() => {
-    if (editState.value == true) {
-        timeSave()
-    }
+    check()
 }, 5 * 60 * 1000);
+
+
+// 检查登录剩余时间
+const check = () => {
+    axios.get("/api/check").then((resp) => {
+
+        // 获取当前时间戳
+        var currentTimestamp = Date.now();
+        // 计算时间戳差值
+        var timeDifference = resp.data.exp - currentTimestamp;
+
+        // 若token有效期 剩余时间不超过10分钟
+        if (timeDifference <= 10 * 60 * 1000) {
+            ElMessageBox.alert("用户TOKEN即将过期，请重新登录！", '提示', {
+                confirmButtonText: '确定',
+                type: 'error',
+            })
+
+            // 若处于编辑状态 
+            if (editState.value == true) {
+                save();
+            }
+        } else {
+            var date = new Date(timeDifference);
+            console.log(date.toISOString().substr(11, 8));
+            // 若处于编辑状态 
+            if (editState.value == true) {
+                timeSave()
+            }
+        }
+
+
+    }).catch((err) => {
+        ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
+    })
+}
 
 // 自动保存
 const timeSave = () => {
@@ -762,13 +875,77 @@ onUnmounted(() => {
 })
 
 
+// 文档树展示
+const folderProps = ref({
+    checkStrictly: true,
+    lazy: true,
+    emitPath: false,
+    lazyLoad(node, resolve) {
+        const { level } = node
+        let nodes = []
+        // 若为根节点
+        if (level == 0) {
+            let item = {
+                value: Number(0),
+                label: user.value.name,
+                leaf: false,
+            }
+            nodes.push(item)
+            resolve(nodes)
+        } else {
+            axios.get("/api/folder/list?id=" + node.data.value).then((resp) => {
+                if (resp.data.length == 0) {
+                    node.data.leaf = true
+                }
+                resp.data.forEach(e => {
+                    let item = {
+                        value: e.id,
+                        label: e.name,
+                        leaf: false,
+                    }
+                    nodes.push(item)
+                })
+                resolve(nodes)
+            }).catch((err) => {
+                ElMessage.error({ message: err.response.data, duration: 1000, showClose: true, });
+            });
+        }
+    },
+})
+
+const changeGroupId = ref()
+
+// 修改笔记分组
+const changeGroup = () => {
+    if (changeGroupId.value == null) {
+        ElMessage.error({ message: "请选择要保存的文件夹", duration: 1000, showClose: true })
+        return
+    }
+    axios.get("/api/note/group?id=" + id.value + "&group=" + changeGroupId.value).then((resp) => {
+        changeGroupId.value = null
+        getNoteInfo()
+        emit("update:change", true)
+        ElMessage.success({ message: "修改成功", duration: 1000, showClose: true })
+    }).catch((err) => {
+        ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
+    }).finally(() => {
+        groupVisible.value = false
+    })
+}
+
+
+defineExpose({
+    getNoteInfo
+})
+
+
 </script>
 
 <style scoped>
 .md-body {
     display: flex;
-    padding: 8px;
-    height: 65px;
+    padding: 10px;
+    height: 80px;
 }
 
 

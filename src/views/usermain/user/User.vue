@@ -105,21 +105,6 @@ const rules = ref({
             trigger: 'change'
         },
     ],
-    // phone: [
-    //     {
-    //         required: true,
-    //         message: '请输入手机号',
-    //         trigger: 'change'
-    //     }
-    // ],
-    // email: [
-    //     {
-    //         required: true,
-    //         message: '请输入邮箱',
-    //         trigger: 'change'
-    //     }
-    // ]
-
 })
 
 const init = () => {
@@ -235,8 +220,8 @@ const upload = (rawFile, allFileList) => {
     })
 
     return true
-
 }
+
 watch(updateAvatarInfo.value, () => {
     upload();
 })

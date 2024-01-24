@@ -15,6 +15,9 @@ const app = createApp(App)
 
 app.config.globalProperties.$http = useInterceptor()
 
+// 屏蔽黄色警告
+app.config.warnHandler = () => null;
+
 app.use(store)
 app.use(router)
 app.use(ElementPlus, {

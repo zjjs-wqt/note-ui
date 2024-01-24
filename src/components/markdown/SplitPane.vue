@@ -3,18 +3,18 @@
         dragging: state.dragging,
         vertical: isVertical
     }" @mousemove="dragMove" @mouseup="dragEnd" @mouseleave="dragEnd">
-        <div class="left" :style="{ [isVertical ? 'height' : 'width']: boundSplit + 'px' }">
+        <div class="left" :style="{ [isVertical ? 'height' : 'width']: boundSplit + 'px' }" v-if="leftFlag">
             <slot name="left" />
             <div class="dragger" @mousedown.prevent="dragStart" />
         </div>
-        <div class="right" :style="{ [isVertical ? 'height' : 'width']: ( 1000- boundSplit) + 'px' }" >
+        <div class="right" :style="{ [isVertical ? 'height' : 'width']: ( 1000- boundSplit) + 'px' }" v-if="rightFlag" >
             <slot name="right" />
         </div>
     </div>
 </template>
 
 <script setup>
-import { reactive, computed, ref } from 'vue'
+import { reactive, computed, ref, watch } from 'vue'
 
 const props = defineProps({
     layout: {
@@ -28,8 +28,27 @@ const props = defineProps({
     max: {
         type: Number,
         default: 0,
+    },
+    leftFlag:{
+        type:Boolean,
+        default:true,
+    },
+    rightFlag:{
+        type:Boolean,
+        default:true
     }
 });
+
+// 左侧栏是否展示
+const leftFlag = ref(props.leftFlag)
+// 右侧栏是否展示
+const rightFlag = ref(props.rightFlag)
+
+// 监听展示是否变化
+watch(props,(newVal,oldVal)=>{
+    leftFlag.value = newVal.leftFlag
+    rightFlag.value = newVal.rightFlag
+})
 
 const isVertical = computed(() => props.layout === 'vertical')
 

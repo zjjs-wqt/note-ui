@@ -4,7 +4,7 @@
     <el-container>
       <el-aside width="200px">
         <el-scrollbar height="calc(93.5vh)">
-          <el-menu class="doc-menu" router>
+          <el-menu class="doc-menu" router :default-active="activeIndex">
             <el-button type="primary" class="doc-btn" @click="dialogVisible = true">
               <el-icon>
                 <Plus />
@@ -51,6 +51,7 @@ import axios from "axios";
 import { Search } from '@element-plus/icons-vue';
 import { ElMessage } from "element-plus";
 import { onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 const loading = ref(false)
 const dialogVisible = ref(false)
@@ -61,6 +62,11 @@ const form = ref({
   name: "",
   description: "",
 })
+const r = useRoute()
+const router = useRouter()
+
+// 当前激活目录
+const activeIndex = ref("")
 
 const rules = ref({
   name: [
@@ -80,15 +86,20 @@ const rules = ref({
 
 const getGroup = () => {
   let url = "/api/userGroup/list?role=255"
-  if (searchKeyWord.value !== ""){
-    url += "&keyword="+ searchKeyWord.value
+  if (searchKeyWord.value !== "") {
+    url += "&keyword=" + searchKeyWord.value
   }
   axios.get(url).then((resp) => {
     list.value = resp.data;
-  })
-    .catch((err) => {
-      ElMessage.error({ message: err.response.data, duration: 1000, showClose: true, });
-    });
+    if (r.params.id = ' ' && list.value.length != 0) {
+      router.push({
+        path: "/index/userGroup/" + list.value[0].belong
+      })
+      activeIndex.value = "/index/userGroup/" + list.value[0].belong
+    }
+  }).catch((err) => {
+    ElMessage.error({ message: err.response.data, duration: 1000, showClose: true, });
+  });
 };
 
 
@@ -97,6 +108,12 @@ const create = () => {
     if (valid) {
       loading.value = true
       axios.post("/api/userGroup/create", form.value).then((resp) => {
+        // 跳转至最新创建的
+        router.push({
+          path: "/index/userGroup/" + resp.data
+        })
+        activeIndex.value = "/index/userGroup/" + resp.data
+
         getGroup();
         ruleForm.value.resetFields()
         loading.value = false
@@ -111,6 +128,7 @@ const create = () => {
 }
 
 onMounted(() => {
+  activeIndex.value = r.fullPath
   getGroup();
 });
 </script>

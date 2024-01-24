@@ -7,7 +7,7 @@
                 <el-tag type="info" style="font-size:18px;">{{ version.systemVersion }}</el-tag>
             </div>
             <el-menu-item index="/index/noteList">笔记列表</el-menu-item>
-            <el-menu-item index="/Index/userGroup">用户组管理</el-menu-item>
+            <el-menu-item index="/index/userGroup">用户组管理</el-menu-item>
             <div class="i-avatar" @click="skipUser">
                 <div style="width:40px;height: 40px; border-radius: 25px; overflow: hidden;">
                     <el-image :src="userInfo.imgSrc" style="width:40px;height: 40px;">
@@ -19,7 +19,6 @@
                 <el-button link class="i-name">{{ userInfo.name }}</el-button>
             </div>
             <el-link type="info" style=" margin-top: 8px;margin-right: 10px;" @click="logout">退出登录</el-link>
-            <!-- <el-button type="primary">退出登录</el-button> -->
         </el-menu>
 
     </div>
@@ -41,9 +40,10 @@ const r = useRoute()
 const version = ref('')
 // 用户头像等信息
 const userInfo = ref({})
+// 从 store 中获取用户信息
 userInfo.value = store.getters.getUserInfo
-// console.log(userInfo.value)
 
+// 获取程序版本信息
 const init = () => {
     axios.get("/api/system/version").then((resp) => {
         version.value = resp.data
@@ -57,7 +57,9 @@ const init = () => {
 // 退出登录
 const logout = () => {
     axios.delete("/api/logout").then((resp) => {
+        // 清空 打开文档记录
         store.commit("saveDocId", 0)
+        // 退出至登录页
         router.push({
             path: "/"
         })
@@ -67,6 +69,7 @@ const logout = () => {
 
 }
 
+// 跳转至用户信息页面
 const skipUser = () => {
     router.push({
         name: 'User'
@@ -83,17 +86,26 @@ document.addEventListener('dragover', function (e) {
 }, false)
 
 
-
+// 当前激活目录
 const activeIndex = ref("")
+
 onMounted(() => {
+    // 检测用户信息
     axios.get("/api/check").then((resp) => {
         resp.data.imgSrc = "/api/user/avatar?id=" + resp.data.id
         store.commit("saveUserInfo", resp.data)
         userInfo.value = resp.data
-    }).catch(() => {
-    })
+    }).catch(() => {})
+    // 初始化
     init()
-    activeIndex.value = r.fullPath
+
+
+    // 设置当前激活目录
+    if (r.fullPath.startsWith("/index/userGroup")){
+        activeIndex.value = "/index/userGroup"
+    }else {
+        activeIndex.value = r.fullPath
+    }
 })
 
 </script>
@@ -107,6 +119,7 @@ onMounted(() => {
 
 .pj-menu {
     width: 100%;
+    height: 60px;
 }
 
 .i-avatar {

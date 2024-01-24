@@ -30,7 +30,8 @@ export abstract class Constants {
     // ext
     "solidity", "yul"
   ];
-  public static readonly CDN = `https://unpkg.com/vditor@3.9.1`;
+  // wqt - 设置cdn
+  public static readonly CDN = `/ui/vditor`;
   public static readonly MARKDOWN_OPTIONS = {
     autoSpace: false,
     gfmAutoLink: true,

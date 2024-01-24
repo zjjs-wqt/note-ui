@@ -159,7 +159,7 @@ const loading = ref(false)
 // 创建用户表单
 const form = ref({
     openid: "", // 工号
-    username: "",
+    // username: "",
     name: "",
     phone: "",
     email: "",

@@ -1,6 +1,6 @@
 <template>
     <div class="wrapper">
-        <div class="container" v-loading="loadding" element-loading-background="rgba(255, 255, 255, 0.8)"
+        <div class="container" v-loading="loading" element-loading-background="rgba(255, 255, 255, 0.8)"
             element-loading-text="数据加载中...">
             <div style="margin: 50px 15px">
                 <h1 style="font-size: 40px; text-align: center;">笔记管理系统</h1>
@@ -41,18 +41,23 @@ import { useRouter } from 'vue-router';
 import GInput from "../../components/GInput.vue";
 import { useStore } from "vuex";
 
-const loadding = ref(false)
+// 加载
+const loading = ref(false)
+// 登录用户名
 const username = ref('');
+// 登录pin码
 const password = ref('');
+// 路由
 const router = useRouter();
+// 存储
 const store = useStore();
-
+// 错误提示：判断
 const pErr = reactive({
     username: false,
     password: false,
 });
 
-
+// 登录
 const handleLogin = () => {
     if (username.value == '') {
         ElMessage.error("账户信息为空");
@@ -63,27 +68,18 @@ const handleLogin = () => {
         return
     }
 
-    loadding.value = true
+    loading.value = true
+
     axios.post("/api/login", {
         username: username.value,
         password: password.value
     }).then((resp) => {
-        if (resp.data.type == "user") {
-            router.push({
-                name: "NoteList"
-            })
-            resp.data.imgSrc = "/api/user/avatar?id=" + resp.data.id
-        }
-        else if (resp.data.type == "admin"){
-            router.push({
-                name: "UserManagement"
-            })
-        }
-        else if (resp.data.type == "audit"){
-            router.push({
-                name: "OperationLog"
-            })
-        }
+        router.push({
+            name: "NoteList"
+        })
+        // 设置用户头像
+        resp.data.imgSrc = "/api/user/avatar?id=" + resp.data.id
+        // 存储用户信息
         store.commit("saveUserInfo", resp.data)
     }).catch((err) => {
         if (err.response.status == 500) {
@@ -92,21 +88,21 @@ const handleLogin = () => {
             ElMessage.error({ message: err.response.data, duration: 2000, showClose: true });
         }
     }).finally(() => {
-        loadding.value = false
+        loading.value = false
     })
 
 }
 
+// 单点登录
 const handleSsoLogin = () => {
     const client_id = 'c05e7e41-18ae-4361-81c4-9010d9dd4623';
     const authorize_uri = 'http://nantemen.hzauth.com/oauth/authorize';
     const redirect_uri = 'http://note.hzmx.com/api/redirect';
     const date = Date.parse(new Date());
-
     window.location.href = `${authorize_uri}?client_id=${client_id}&redirect_uri=${redirect_uri}&state=${date}`;
 }
 
-
+// 登录用户错误提示
 const handleUsernameBlur = (v) => {
     if (v != "") {
         pErr.username = false;
@@ -115,6 +111,7 @@ const handleUsernameBlur = (v) => {
     }
 }
 
+// 登录PIN错误提示
 const handlePasswordBlur = (v) => {
     if (v != '') {
         pErr.password = false;
@@ -123,20 +120,22 @@ const handlePasswordBlur = (v) => {
     }
 }
 
+// 自动登录
 onMounted(() => {
     axios.get("/api/check").then((resp) => {
+        // 判断用户类型
         if (resp.data.type == "user") {
             router.push({
                 name: "NoteList"
             })
             resp.data.imgSrc = "/api/user/avatar?id=" + resp.data.id
         }
-        else if (resp.data.type == "admin"){
+        else if (resp.data.type == "admin") {
             router.push({
                 name: "UserManagement"
             })
         }
-        else if (resp.data.type == "audit"){
+        else if (resp.data.type == "audit") {
             router.push({
                 name: "OperationLog"
             })
