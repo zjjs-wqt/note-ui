@@ -622,10 +622,15 @@ export const highlightToolbarWYSIWYG = (vditor: IVditor) => {
                 language.className = "vditor-input";
                 language.setAttribute("placeholder",
                     window.VditorI18n.language + "<" + updateHotkeyTip("⌥Enter") + ">");
+                // wqt 代码块 语言支持输入空格
                 language.value =
                     codeElement.className.indexOf("language-") > -1
-                        ? codeElement.className.split("-")[1].split(" ")[0]
+                        ? codeElement.className.split("-")[1]
                         : "";
+                // language.value =
+                //     codeElement.className.indexOf("language-") > -1
+                //         ? codeElement.className.split("-")[1].split(" ")[0]
+                //         : "";        
                 language.oninput = (e: InputEvent) => {
                     if (language.value.trim() !== "") {
                         codeElement.className = `language-${language.value}`;
@@ -648,6 +653,7 @@ export const highlightToolbarWYSIWYG = (vditor: IVditor) => {
                     }
                 };
                 language.onkeydown = (event: KeyboardEvent) => {
+                    
                     if (event.isComposing) {
                         return;
                     }

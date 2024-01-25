@@ -11,6 +11,7 @@ import {mindmapRender} from "../markdown/mindmapRender";
 import {plantumlRender} from "../markdown/plantumlRender";
 
 export const processPasteCode = (html: string, text: string, type = "sv") => {
+    
     const tempElement = document.createElement("div");
     tempElement.innerHTML = html;
     let isCode = false;
@@ -63,6 +64,7 @@ export const processCodeRender = (previewPanel: HTMLElement, vditor: IVditor) =>
         return;
     }
     const language = previewPanel.firstElementChild.className.replace("language-", "");
+    
     if (language === "abc") {
         abcRender(previewPanel, vditor.options.cdn);
     } else if (language === "mermaid") {

@@ -55,7 +55,16 @@ export const getSideByType = (spanNode: Node, type: string, isPrevious = true) =
 
 export const processSpinVditorSVDOM = (html: string, vditor: IVditor) => {
     log("SpinVditorSVDOM", html, "argument", vditor.options.debugger);
+
+    // wqt - 处理代码块第一行语言处因空格异常删除内容
+    if (html.startsWith('```')){
+        let str = html.split("\n")[0]
+        let strReplace = str.replace(" ",'')
+        html = html.replace(str,strReplace);
+    }
+
     const spinHTML = vditor.lute.SpinVditorSVDOM(html)
+    
     if (spinHTML.indexOf('data-type="footnotes-link"') > -1 ||
         spinHTML.indexOf('data-type="link-ref-defs-block"') > -1) {
         html = "<div data-block='0'>" + spinHTML + "</div>";

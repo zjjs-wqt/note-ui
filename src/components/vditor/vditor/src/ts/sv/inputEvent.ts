@@ -17,7 +17,7 @@ export const inputEvent = (vditor: IVditor, event?: InputEvent) => {
         let startSpace = true;
         for (let i = startOffset - 1;
             // 软换行后有空格
-             i > blockElement.textContent.substr(0, startOffset).lastIndexOf("\n"); i--) {
+            i > blockElement.textContent.substr(0, startOffset).lastIndexOf("\n"); i--) {
             if (blockElement.textContent.charAt(i) !== " " &&
                 // 多个 tab 前删除不形成代码块 https://github.com/Vanessa219/vditor/issues/162 1
                 blockElement.textContent.charAt(i) !== "\t") {
