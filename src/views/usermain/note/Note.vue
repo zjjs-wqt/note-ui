@@ -122,7 +122,7 @@
 
 
                             <el-pagination class="pagiantion" :current-page="pagination.currentPage"
-                                :page-size="pagination.pageSize" :page-sizes="[10]" layout="total,  prev, pager, next"
+                                :page-size="pagination.pageSize" :page-sizes="[10]" layout="prev, pager, next"
                                 :pager-count="5" :total="pagination.total" @current-change="handleCurrentChange" small
                                 @size-change="handleSizeChange">
                             </el-pagination>
@@ -158,13 +158,16 @@
         width="30%">
         <el-form ref="ruleForm" :model="form" :rules="rules" label-width="120px" v-loading="dialogLoading">
 
-            <el-form-item label="当前文件夹" v-if="contextmenuType == 'doc' || contextmenuType == 'subfolder'"
+            <el-form-item label="当前文件夹"
+                v-if="contextmenuType == 'doc' || contextmenuType == 'subfolder' || contextmenuType == 'folder'"
                 style="width: 80%;">
                 {{ user.name }} /
-                <span v-for="item, index in folderMenu" :key="index">
-                    {{ item.name }}/
-                </span>
-                <span v-if="contextmenuType == 'subfolder'">
+                <div v-if="contextmenuType !== 'folder'">
+                    <span v-for="item, index in folderMenu" :key="index">
+                        {{ item.name }}/
+                    </span>
+                </div>
+                <span v-if="contextmenuType == 'subfolder' || contextmenuType == 'folder'">
                     {{ folderName }}/
                 </span>
             </el-form-item>
@@ -172,7 +175,7 @@
                 <el-input v-model="form.title" @keydown.enter="createNote"></el-input>
             </el-form-item>
             <el-form-item label="文件夹" prop="tags" style="width: 80%;"
-                v-if="contextmenuType !== 'doc' && contextmenuType !== 'subfolder'">
+                v-if="contextmenuType !== 'doc' && contextmenuType !== 'subfolder' && contextmenuType !== 'folder'">
                 <el-cascader v-model="form.folderId" :props="props" clearable filterable style="width:320px" />
             </el-form-item>
         </el-form>
@@ -333,10 +336,19 @@
         width="30%">
         <el-form label-width="120px" v-loading="dialogLoading">
             <el-form-item label="当前文件夹" style="width: 80%;">
-                <div>
+                <div v-if="contextmenuType == 'subfolder'">
                     {{ user.name }}/
                     <span v-for="item, index in folderMenu" :key="index">
                         {{ item.name }}/
+                    </span>
+                    <span>
+                        {{ folderName }}/
+                    </span>
+                </div>
+                <div v-if="contextmenuType == 'folder'">
+                    {{ user.name }}/
+                    <span>
+                        {{ folderName }}/
                     </span>
                 </div>
             </el-form-item>

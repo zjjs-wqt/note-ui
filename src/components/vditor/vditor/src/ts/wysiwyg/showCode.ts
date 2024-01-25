@@ -28,6 +28,5 @@ export const showCode = (previewElement: HTMLElement, vditor: IVditor, first = t
     if (previewElement.firstElementChild.classList.contains("language-mindmap")) {
         return;
     }
-    // wqt - 点击代码块不自动跳转
-    // scrollCenter(vditor);
+    scrollCenter(vditor);
 };

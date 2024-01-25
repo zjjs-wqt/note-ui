@@ -1,10 +1,10 @@
-import {isCtrl} from "../util/compatibility";
-import {fixTab} from "../util/fixBrowserBehavior";
-import {hasClosestByAttribute} from "../util/hasClosest";
-import {hasClosestByTag} from "../util/hasClosestByHeadings";
-import {getEditorRange, getSelectPosition} from "../util/selection";
-import {inputEvent} from "./inputEvent";
-import {processAfterRender, processPreviousMarkers} from "./process";
+import { isCtrl } from "../util/compatibility";
+import { fixTab } from "../util/fixBrowserBehavior";
+import { hasClosestByAttribute } from "../util/hasClosest";
+import { hasClosestByTag } from "../util/hasClosestByHeadings";
+import { getEditorRange, getSelectPosition } from "../util/selection";
+import { inputEvent } from "./inputEvent";
+import { processAfterRender, processPreviousMarkers } from "./process";
 
 export const processKeydown = (vditor: IVditor, event: KeyboardEvent) => {
     vditor.sv.composingLock = event.isComposing;
@@ -149,10 +149,32 @@ export const processKeydown = (vditor: IVditor, event: KeyboardEvent) => {
 
     // 删除后光标前有 newline 的处理
     if (event.key === "Backspace" && !isCtrl(event) && !event.altKey && !event.shiftKey) {
+
+        // wqt - 防止异常删除换行符
+        if (spanElement && spanElement.previousElementSibling?.getAttribute("data-type") === "newline" &&
+            getSelectPosition(spanElement, vditor.sv.element, range).start === 0 &&
+            getSelectPosition(spanElement, vditor.sv.element, range).end !== 0 ) {
+
+            // 光标在每一行的第一个字符后
+            range.setStart(spanElement, 0);
+            range.extractContents();
+            if (spanElement.textContent.trim() !== "") {
+                inputEvent(vditor);
+            } else {
+                processAfterRender(vditor);
+            }
+            event.preventDefault();
+            return true;
+        }
+
+
+        // wqt - 处理异常情况 （ 选中多部分内容情况下会异常删除第一个字符，加判断判断是否为单字符删除 ）
         if (spanElement && spanElement.previousElementSibling?.getAttribute("data-type") === "newline" &&
             getSelectPosition(spanElement, vditor.sv.element, range).start === 1 &&
+            getSelectPosition(spanElement, vditor.sv.element, range).end === 1 &&
             // 飘号的处理需在 inputEvent 中，否则上下飘号对不齐
             spanElement.getAttribute("data-type").indexOf("code-block-") === -1) {
+
             // 光标在每一行的第一个字符后
             range.setStart(spanElement, 0);
             range.extractContents();

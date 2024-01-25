@@ -138,8 +138,7 @@ class IR {
                 range.collapse(true);
                 setSelectionFocus(range);
 
-                // wqt - 点击代码块不自动跳转
-                // scrollCenter(vditor);
+                scrollCenter(vditor);
             }
 
             // 点击图片光标选中图片地址
