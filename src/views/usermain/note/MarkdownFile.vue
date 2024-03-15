@@ -8,8 +8,10 @@
                 v-else-if="editState == false && noteInfo.isDelete == 0 && !outlineFlag" :icon="Hide"
                 title="显示大纲"></el-button>
             <!-- 显示备注 还是 名称 -->
-            <h2 v-if="editState == false && noteInfo.remark == '' && remarkStatus == false">{{ noteInfo.title }}</h2>
-            <h2 v-else-if="editState == false && noteInfo.remark !== '' && remarkStatus == false"> {{ noteInfo.remark }}
+            <h2 v-if="editState == false && noteInfo.remark == '' && remarkStatus == false" class="hide"
+                :title="noteInfo.title">{{ noteInfo.title }}</h2>
+            <h2 v-else-if="editState == false && noteInfo.remark !== '' && remarkStatus == false" class="hide"
+                :title="noteInfo.remark"> {{ noteInfo.remark }}
             </h2>
             <!-- 修改备注 或名称 -->
             <el-input v-model="noteInfo.title" class="md-input"
@@ -40,7 +42,7 @@
             <!-- 编辑状态 - 未编辑 -->
             <div class="md-btn-group" v-if="editState == false">
                 <div class="md-btn">
-                    <el-button type="primary" style="margin-top:5px;" @click="changeToEdit"
+                    <el-button type="primary" style="margin-top:5px;" @click="changeToEdit()"
                         v-if="(noteInfo.role == 0 || noteInfo.role == 2) && noteInfo.isDelete == 0">编辑</el-button>
                     <el-button type="danger" style="margin-top:5px;" @click="toDelete"
                         v-if="noteInfo.role == 0 && noteInfo.isDelete == 0">刪除</el-button>
@@ -51,7 +53,7 @@
                 <div class="md-btn">
                     <el-button type="primary" style="margin-top:5px;"
                         @click="remarkStatus = true; remarkBackup = noteInfo.remark"
-                        v-if="noteInfo.role == 1 && remarkStatus == false &&  noteInfo.isDelete == 0">修改备注</el-button>
+                        v-if="noteInfo.role == 1 && remarkStatus == false && noteInfo.isDelete == 0">修改备注</el-button>
                     <el-button v-if="remarkStatus == true" style="margin-top:5px;" :disabled="btnStatus"
                         @click="cancel">取消</el-button>
                     <el-button @click="save" type="warning" style="margin-top:5px;" :disabled="btnStatus"
@@ -127,24 +129,31 @@
             </template>
         </el-dialog>
 
-        <el-dialog v-model="groupVisible" v-if="groupVisible" :close-on-click-modal="false" :show-close="false" title="保存至" width="30%">
+        <el-dialog v-model="groupVisible" v-if="groupVisible" :close-on-click-modal="false" :show-close="false" title="保存至"
+            width="30%">
 
             <el-form label-width="120px">
                 <el-form-item label="当前文件夹" style="width: 80%;">
-                    <div >
-                        {{user.name}} 
+                    <div>
+                        根文件夹
                     </div>/
                     <div>
                         {{ noteInfo.folderName }}
                     </div>
                 </el-form-item>
-                <el-form-item label="文件夹" prop="folder" style="width: 80%;" >
-                    <el-cascader v-model="changeGroupId" :props="folderProps" clearable filterable style="width:320px" />
+                <el-form-item label="文件夹" prop="folder" style="width: 80%;">
+                    <el-cascader v-model="changeGroupId" :props="folderProps" clearable filterable style="width:320px">
+                        <template #default="{ data: { label } }">
+                            <div class="hide" style="width:150px" :title="label">
+                                {{ label }}
+                            </div>
+                        </template>
+                    </el-cascader>
                 </el-form-item>
             </el-form>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button @click="groupVisible = false;changeGroupId=null">
+                    <el-button @click="groupVisible = false; changeGroupId = null">
                         取消
                     </el-button>
                     <el-button type="primary" @click="changeGroup">提交</el-button>
@@ -464,6 +473,7 @@ const emit = defineEmits(["update:change", "update:editing", "delete", "errId"])
 // 初始化
 const init = () => {
     if (id.value === 0) {
+        noteInfo.value = {}
         return
     }
     getList()
@@ -484,6 +494,11 @@ const init = () => {
 
 // 获取笔记信息
 const getNoteInfo = () => {
+    if (id.value == 0){
+        noteInfo.value = {}
+        return 
+    }
+
     axios.get("/api/note/info?id=" + id.value).then((resp) => {
         noteInfo.value = resp.data
         if (noteInfo.value.folderId !== 0) {
@@ -548,11 +563,17 @@ const beforeunloadFn = (e) => {
 }
 
 // 获取编辑状态
-const changeToEdit = () => {
+const changeToEdit = (createId) => {
+
+    if (createId != null) {
+        id.value = createId
+        init()
+        window.addEventListener('beforeunload', beforeunloadFn)
+    }
 
     // 先获取最新文档
     loading.value = true
-    axios.get("/api/note/content?id=" + noteInfo.value.id).then((resp) => {
+    axios.get("/api/note/content?id=" + id.value).then((resp) => {
         content.value = resp.data
         contentTime.value = resp.data
         if (perviewFlag.value === true) {
@@ -885,13 +906,29 @@ const folderProps = ref({
         let nodes = []
         // 若为根节点
         if (level == 0) {
-            let item = {
-                value: Number(0),
-                label: user.value.name,
-                leaf: false,
-            }
-            nodes.push(item)
-            resolve(nodes)
+            axios.get("/api/folder/list?id=0").then((resp) => {
+                let item = {
+                    value: 0,
+                    label: "根文件夹",
+                    leaf: true,
+                }
+                nodes.push(item)
+                if (resp.data.length == 0) {
+                    node.data.leaf = true
+                }
+                resp.data.forEach(e => {
+                    let item = {
+                        value: e.id,
+                        label: e.name,
+                        leaf: false,
+                    }
+                    nodes.push(item)
+                })
+
+                resolve(nodes)
+            }).catch((err) => {
+                ElMessage.error({ message: err.response.data, duration: 1000, showClose: true, });
+            });
         } else {
             axios.get("/api/folder/list?id=" + node.data.value).then((resp) => {
                 if (resp.data.length == 0) {
@@ -935,7 +972,8 @@ const changeGroup = () => {
 
 
 defineExpose({
-    getNoteInfo
+    getNoteInfo,
+    changeToEdit
 })
 
 
@@ -980,5 +1018,13 @@ defineExpose({
     display: flex;
     padding-left: 10px;
     padding-top: 23px;
+}
+
+.hide {
+    display: block;
+    max-width: 700px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 </style>

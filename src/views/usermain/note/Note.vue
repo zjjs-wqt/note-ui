@@ -32,7 +32,7 @@
                         <el-sub-menu index="userGroup">
                             <template #title><span> 用户组</span></template>
                             <el-menu-item v-for="item, index in userGroup" :index="'user-' + item.name" :key="index"
-                                @click="searchForNotes(item, 'group')">
+                                @click="searchForNotes(item, 'group')" class="hide" :title="item.name">
                                 {{ item.name }}</el-menu-item>
                         </el-sub-menu>
 
@@ -75,7 +75,7 @@
                                         @click="searchForNotes(null, 'back')" style="width: 20px;">
                                     </el-button>
 
-                                    <div style="color:#909399;max-width: 150px;margin: auto;" class="hide">
+                                    <div style="color:#909399;max-width: 75%;margin: auto;" class="hide">
                                         {{ folderInfo.name }}
                                     </div>
                                 </div>
@@ -161,7 +161,7 @@
             <el-form-item label="当前文件夹"
                 v-if="contextmenuType == 'doc' || contextmenuType == 'subfolder' || contextmenuType == 'folder'"
                 style="width: 80%;">
-                {{ user.name }} /
+                根文件夹/
                 <div v-if="contextmenuType !== 'folder'">
                     <span v-for="item, index in folderMenu" :key="index">
                         {{ item.name }}/
@@ -176,7 +176,13 @@
             </el-form-item>
             <el-form-item label="文件夹" prop="tags" style="width: 80%;"
                 v-if="contextmenuType !== 'doc' && contextmenuType !== 'subfolder' && contextmenuType !== 'folder'">
-                <el-cascader v-model="form.folderId" :props="props" clearable filterable style="width:320px" />
+                <el-cascader v-model="form.folderId" :props="props" clearable filterable style="width:320px">
+                    <template #default="{ data: { label } }">
+                        <div class="hide" style="width:150px" :title="label">
+                            {{ label }}
+                        </div>
+                    </template>
+                </el-cascader>
             </el-form-item>
         </el-form>
         <template #footer>
@@ -193,7 +199,7 @@
         <el-form ref="folderRuleForm" :model="folderForm" :rules="folderRules" label-width="120px"
             v-loading="dialogLoading">
             <el-form-item label="当前文件夹" v-if="contextmenuType == 'doc'" style="width: 80%;">
-                {{ user.name }}/
+                根文件夹/
                 <span v-for="item, index in folderMenu" :key="index">
                     {{ item.name }}/
                 </span>
@@ -276,12 +282,18 @@
 
             <el-form-item label="当前文件夹" style="width: 80%;">
                 <div>
-                    {{ user.name }}/{{ noteInfo.folderName }}
+                    根文件夹/{{ noteInfo.folderName }}
                 </div>
             </el-form-item>
 
             <el-form-item label="文件夹" prop="folder" style="width: 80%;" v-if="contextmenuType !== 'doc'">
-                <el-cascader v-model="changeGroupId" :props="props" clearable filterable style="width:320px" />
+                <el-cascader v-model="changeGroupId" :props="props" clearable filterable style="width:320px">
+                    <template #default="{ data: { label } }">
+                        <div class="hide" style="width:150px" :title="label">
+                            {{ label }}
+                        </div>
+                    </template>
+                </el-cascader>
             </el-form-item>
 
         </el-form>
@@ -319,7 +331,7 @@
             </el-descriptions-item>
             <el-descriptions-item label="所处文件夹">
                 <div>
-                    {{ user.name }}/{{ noteInfo.folderName }}
+                    根文件夹/{{ noteInfo.folderName }}
                 </div>
             </el-descriptions-item>
         </el-descriptions>
@@ -337,7 +349,7 @@
         <el-form label-width="120px" v-loading="dialogLoading">
             <el-form-item label="当前文件夹" style="width: 80%;">
                 <div v-if="contextmenuType == 'subfolder'">
-                    {{ user.name }}/
+                    根文件夹/
                     <span v-for="item, index in folderMenu" :key="index">
                         {{ item.name }}/
                     </span>
@@ -346,7 +358,7 @@
                     </span>
                 </div>
                 <div v-if="contextmenuType == 'folder'">
-                    {{ user.name }}/
+                    根文件夹/
                     <span>
                         {{ folderName }}/
                     </span>
@@ -354,7 +366,13 @@
             </el-form-item>
 
             <el-form-item label="文件夹" prop="folder" style="width: 80%;">
-                <el-cascader v-model="removeForm.parentId" :props="props" clearable filterable style="width:320px" />
+                <el-cascader v-model="removeForm.parentId" :props="props" clearable filterable style="width:320px">
+                    <template #default="{ data: { label } }">
+                        <div class="hide" style="width:150px" :title="label">
+                            {{ label }}
+                        </div>
+                    </template>
+                </el-cascader>
             </el-form-item>
 
         </el-form>
@@ -372,7 +390,7 @@
 
         <!-- 左侧栏 或 中间栏 的文件夹 -->
         <div v-if="contextmenuType == 'folder' || contextmenuType == 'subfolder'">
-            <div style="margin: 5px;color:blue">
+            <div class="hide menu-title" :title="folderName">
                 {{ folderName }}
             </div>
             <v-contextmenu-item @click="form.folderId = folderId; dialogVisible = true;">创建文件</v-contextmenu-item>
@@ -383,7 +401,7 @@
 
         <!-- 中间栏 空白处 -->
         <div v-else-if="contextmenuType == 'doc'">
-            <div style="margin: 5px;color:blue" v-if="folderInfo !== null">
+            <div v-if="folderInfo !== null" class="hide menu-title" :title="folderInfo.name">
                 {{ folderInfo.name }}
             </div>
 
@@ -396,11 +414,10 @@
 
         <!-- 中间栏 文档处 -->
         <div v-else-if="contextmenuType == 'note'">
-            <div style="margin: 5px;color:blue;width: 150px;" v-if="menuNoteInfo.remark == ''" class="hide"
-                :title="menuNoteInfo.title">
+            <div v-if="menuNoteInfo.remark == ''" class="hide menu-title" :title="menuNoteInfo.title">
                 {{ menuNoteInfo.title }}
             </div>
-            <div style="margin: 5px;color:blue;width: 150px;" v-else class="hide" :title="menuNoteInfo.remark">
+            <div v-else class="hide menu-title" :title="menuNoteInfo.remark">
                 {{ menuNoteInfo.remark }}
             </div>
 
@@ -642,6 +659,7 @@ const searchNotes = () => {
         if (docId.value === 0) {
             if (docList.value.length <= 0) {
                 console.log("未查询到笔记");
+                markdownFile.value.getNoteInfo()
             } else {
                 turnTo(docList.value[0].id)
             }
@@ -676,13 +694,35 @@ const props = ref({
         let nodes = []
         // 若为根节点
         if (level == 0) {
-            let item = {
-                value: 0,
-                label: user.value.name,
-                leaf: false,
-            }
-            nodes.push(item)
-            resolve(nodes)
+            axios.get("/api/folder/list?id=0").then((resp) => {
+                let item = {
+                    value: 0,
+                    label: "根文件夹",
+                    leaf: true,
+                }
+                nodes.push(item)
+                if (resp.data.length == 0) {
+                    node.data.leaf = true
+                }
+                resp.data.forEach(e => {
+                    let item = {
+                        value: e.id,
+                        label: e.name,
+                        leaf: false,
+                    }
+                    if (contextmenuType.value == 'folder' || contextmenuType.value == 'subfolder') {
+                        if (folderId.value == e.id) {
+                            item.leaf = true
+                            item.disabled = true
+                        }
+                    }
+                    nodes.push(item)
+                })
+                resolve(nodes)
+            }).catch((err) => {
+                ElMessage.error({ message: err.response.data, duration: 1000, showClose: true, });
+            });
+
         } else {
             axios.get("/api/folder/list?id=" + node.data.value).then((resp) => {
                 if (resp.data.length == 0) {
@@ -817,6 +857,7 @@ const rename = () => {
         inputPlaceholder: folderName,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
+        inputValue: folderName,
     }).then(({ value }) => {
         if (folderId <= 0) {
             ElMessage.error({ message: "操作异常", duration: 1000, showClose: true, });
@@ -958,6 +999,7 @@ const renameNote = () => {
         inputPlaceholder: inputPlaceholderTxt,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
+        inputValue: inputPlaceholderTxt,
     }).then(({ value }) => {
         if (menuNoteInfo.value.id <= 0) {
             ElMessage.error({ message: "操作异常", duration: 1000, showClose: true, });
@@ -1012,8 +1054,11 @@ const createNote = () => {
                 form.value.title = null
                 form.value.folderId = null
                 ruleForm.value.resetFields()
+
+                markdownFile.value.changeToEdit(resp.data)
                 ElMessage.success({ message: "新建成功", duration: 1000, showClose: true })
             }).catch((err) => {
+                console.log(err);
                 ElMessage.error({ message: err.response.data, duration: 1000, showClose: true })
             }).finally(() => {
                 dialogLoading.value = false
@@ -1324,6 +1369,13 @@ const changeGroup = () => {
 
 .el-main {
     --el-main-padding: 0px;
+}
+
+.menu-title {
+    padding: 5px;
+    width: 150px;
+    color: #909399;
+    border-bottom: solid 1px #73767a;
 }
 
 .hide {

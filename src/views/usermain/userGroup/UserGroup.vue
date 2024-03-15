@@ -15,12 +15,15 @@
               @clear="getGroup()" clearable>
             </el-input>
             <el-menu-item v-for="(item, index) in list" :key="index" :index="'/index/userGroup/' + item.belong">
-              {{ item.name }}</el-menu-item>
+              <div style="overflow: hidden;white-space: nowrap;text-overflow: ellipsis;" :title="item.name">
+                {{ item.name }}
+              </div>
+            </el-menu-item>
           </el-menu>
         </el-scrollbar>
       </el-aside>
       <el-main>
-        <RouterView> </RouterView>
+        <RouterView @update:change="getGroup"> </RouterView>
       </el-main>
     </el-container>
 
@@ -50,8 +53,8 @@
 import axios from "axios";
 import { Search } from '@element-plus/icons-vue';
 import { ElMessage } from "element-plus";
-import { onMounted, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { nextTick, onMounted, ref } from "vue";
+import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 
 const loading = ref(false)
 const dialogVisible = ref(false)
@@ -76,8 +79,8 @@ const rules = ref({
       trigger: 'change'
     },
     {
-      max: 50,
-      message: '最大长度不可超过50字',
+      max: 30,
+      message: '最大长度不可超过30字',
       trigger: 'change'
     },
   ],
@@ -91,7 +94,7 @@ const getGroup = () => {
   }
   axios.get(url).then((resp) => {
     list.value = resp.data;
-    if (r.params.id = ' ' && list.value.length != 0) {
+    if (r.params.id == '' && list.value.length != 0) {
       router.push({
         path: "/index/userGroup/" + list.value[0].belong
       })
@@ -131,6 +134,19 @@ onMounted(() => {
   activeIndex.value = r.fullPath
   getGroup();
 });
+
+onBeforeRouteUpdate((to, form) => {
+  if (to.fullPath == '/index/userGroup') {
+    return false
+  }else {
+    getGroup();
+  }
+
+
+});
+
+
+
 </script>
 
 <style scoped>

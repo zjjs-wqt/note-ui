@@ -1,11 +1,19 @@
 <template>
-  <div v-if="id != 0">
+  <div v-if="id != 0" v-loading="bodyLoading" element-loading-background="rgba(255, 255, 255, 0.8)"
+    element-loading-text="数据加载中...">
     <div v-if="role == 0">
-      <div class="mem-invite">
-        <div style="float:left;margin-right: 500px;font-size: 24px;margin-left: 8px;">
-          <strong>用户组成员</strong>
+      <div>
+        <div v-if="editFlag" style="font-size: 25px;margin: 10px 5px;">
+          <el-input v-model="groupInfo.name" maxlength="30" show-word-limit style="width: 300px;"
+            @keydown.enter="handleEditTitle" :ref="(el) => { tofocus(el) }"></el-input>
+          <el-button style="margin-left: 20px;" type="primary" @click="handleEditTitle">保存</el-button>
+          <el-button style="margin-left: 20px;" @click="handleCancel">取消</el-button>
         </div>
-        <div style="font-size: 12px;width: 160px;">
+        <div v-else style="font-size: 25px;margin: 10px 5px;display: flex;">
+          <div class="hide" :title="groupInfo.name">{{ groupInfo.name }}</div>
+          <el-button style="margin-left: 20px;" :icon="EditPen" link @click="editFlag = true;" size="large"></el-button>
+        </div>
+        <div style="font-size: 12px;width: 160px;padding-top: 5px;">
           <span>您可以邀请成员加入用户组。</span>
         </div>
         <div style="margin: 20px" />
@@ -38,6 +46,10 @@
         </el-form>
       </div>
     </div>
+    <div v-else style="font-size: 25px;margin: 10px 5px;display: flex;">
+      <div class="hide" :title="groupInfo.name">{{ groupInfo.name }}</div>
+    </div>
+
 
     <div class="mem-list-title" style="display:flex;">
       <span style="float:left;margin-left: 10px;"><strong>用户组已有人员</strong></span>
@@ -50,12 +62,11 @@
         &nbsp;查询
       </el-button>
     </div>
-    <div class="mem-project" style="min-height:80px;" v-loading="bodyLoading"
-      element-loading-background="rgba(255, 255, 255, 0.8)" element-loading-text="数据加载中...">
+    <div class="mem-project" style="min-height:80px;">
       <el-card shadow="hover" v-for="item, index in tableData" :key="index">
         <div class="mem-title-body" style="display:flex;">
           <div class="mem-name" style="display: flex;">
-            <el-image :src="'/api/user/avatar?id='+item.userId" style="width:40px;height: 40px;">
+            <el-image :src="'/api/user/avatar?id=' + item.userId"  style="width:40px;height: 40px; border-radius: 25px; overflow: hidden;">
               <template #error>
                 <el-avatar :src="icon" />
               </template>
@@ -95,6 +106,7 @@ import {
   Delete,
   Edit,
   Share,
+  EditPen,
 } from '@element-plus/icons-vue'
 import axios from "axios";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -102,6 +114,9 @@ import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { onBeforeRouteUpdate } from "vue-router";
 import icon from "../../../assets/icon.png"
+
+const emit = defineEmits(["update:change"])
+const editFlag = ref(false)
 
 const labelPosition = ref('top')
 const router = useRoute();
@@ -119,9 +134,9 @@ const member = ref({
   groupId: id.value
 })
 
-const roleTable = ['管理者',  '普通用户','维护']
+const roleTable = ['管理者', '普通用户', '维护']
 const rolePermission = [
-{
+  {
     value: 1,
     label: '普通用户',
     disabled: false,
@@ -131,15 +146,21 @@ const rolePermission = [
     label: '维护',
     disabled: false,
   },
-  
+
 ]
+
+// 自动聚焦
+const tofocus = (val) => {
+  if (val) {
+    val.focus()
+  }
+}
 
 const persion = ref([])// 成员名称下拉框
 let last = "";
 let current = "";
 
 const memRemoteMethod = (keyword) => {
-
   // 1.  参数检查
   if (!keyword) {
     persion.value = []
@@ -199,12 +220,13 @@ const deleteMember = (userId, name) => {
 
     })
 }
+
 // 添加成员
 const addMember = () => {
   btnStatus.value = true
   if (member.value.userId == "") {
     btnStatus.value = false
-    ElMessage.error({ message: "请选择项目成员", duration: 2000, showClose: true });
+    ElMessage.error({ message: "请选择用户组成员", duration: 2000, showClose: true });
     return
   }
   axios.post("/api/userGroup/add", member.value).then((resp) => {
@@ -244,7 +266,6 @@ const memberList = () => {
     url += "&keyword=" + keyword.value
   }
   axios.get(url).then((resp) => {
-    // console.log(resp.data);
     tableData.value = resp.data
   }).catch((err) => {
     ElMessage.error({ message: err.response.data, duration: 1000, showClose: true, });
@@ -252,27 +273,80 @@ const memberList = () => {
 }
 
 
+const groupInfo = ref({
+  name: ""
+})
+
 const init = () => {
   if (id.value == 0) {
     return
   }
+  bodyLoading.value = true
   axios.get("/api/userGroup/role?groupId=" + id.value).then((resp) => {
     role.value = resp.data
-    axios.get("/api/userGroup/all?groupId=" + id.value).then((resp) => {
-      // console.log(resp.data);
-      tableData.value = resp.data
-    }).catch((err) => {
-      ElMessage.error({ message: err.response.data, duration: 1000, showClose: true, });
-    });
+    return axios.get("/api/userGroup/all?groupId=" + id.value)
+  }).then((resp) => {
+    tableData.value = resp.data
+    return axios.get("/api/userGroup/info?groupId=" + id.value)
+  }).then((resp) => {
+    groupInfo.value = resp.data
   }).catch((err) => {
     ElMessage.error({ message: err.response.data, duration: 1000, showClose: true, });
+  }).finally(() => {
+    bodyLoading.value = false
   });
 };
 
+
+const handleCancel = () => {
+  editFlag.value = false
+  bodyLoading.value = true
+  axios.get("/api/userGroup/info?groupId=" + id.value).then((resp) => {
+    groupInfo.value = resp.data
+  }).catch((err) => {
+    ElMessage.error({ message: err.response.data, duration: 2000, showClose: true, });
+  }).finally(() => {
+    bodyLoading.value = false
+  });
+}
+
+
+const handleEditTitle = () => {
+
+  if (groupInfo.value.name.trim() == '') {
+    ElMessage.error({ message: "用户组名称不可为空", duration: 2000, showClose: true })
+    return
+  }
+
+  let form = {
+    id: groupInfo.value.id,
+    name: groupInfo.value.name
+  }
+
+  bodyLoading.value = true
+  axios.post("/api/userGroup/rename", form).then((resp) => {
+    ElMessage.success({ message: "用户组名称修改成功", duration: 2000, showClose: true })
+
+    emit("update:change", true)
+
+    return axios.get("/api/userGroup/info?groupId=" + id.value)
+  }).then((resp) => {
+    groupInfo.value = resp.data
+  }).catch((err) => {
+    ElMessage.error({ message: err.response.data, duration: 2000, showClose: true, });
+  }).finally(() => {
+    editFlag.value = false
+    bodyLoading.value = false
+  });
+
+
+
+}
+
 onMounted(() => {
   if (id.value != 0) {
-    init()
     id.value = Number(router.params.id);
+    init()
   }
 
 });
@@ -280,6 +354,7 @@ onMounted(() => {
 onBeforeRouteUpdate((to, form) => {
   id.value = to.params.id;
   member.value.groupId = Number(id.value)
+  editFlag.value = false
   init();
 });
 </script>
@@ -292,5 +367,13 @@ onBeforeRouteUpdate((to, form) => {
   background-color: #fafafa;
   border-bottom: 1px solid #e5e5e5;
   margin-top: 20px;
+}
+
+.hide {
+  display: block;
+  max-width: 350px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 </style>

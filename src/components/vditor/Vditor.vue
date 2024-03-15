@@ -12,7 +12,7 @@ import { useStore } from 'vuex';
 const vditor = ref(null)
 const flag = ref(false)
 
-const store =useStore()
+const store = useStore()
 const props = defineProps({
     // 内容
     content: {
@@ -130,13 +130,16 @@ const init = () => {
         },
         typewriterMode: true,
         mode: mode,
-        cdn:"/ui/vditor",
+        cdn: "/ui/vditor",
         preview: {
             mode: "both",
             actions: [],
             hljs: {
                 enable: true,
                 lineNumber: true
+            },
+            markdown: {
+                codeBlockPreview: false,
             },
             parse: (val) => {
                 // 完成渲染
@@ -156,7 +159,7 @@ const init = () => {
                     let url = ""
                     if (codeType.value === "note") {
                         url = "/api/note/assert"
-                    } 
+                    }
                     axios.post(url, formData, {
                         onUploadProgress: (progressEvent) => {
                             if (Math.floor(progressEvent.progress * 100) < 100) {
@@ -207,8 +210,11 @@ const getValue = () => {
 }
 const firstFlag = ref(true)
 const setValue = (content) => {
-    // 加载动画
-    if ((content == '' || content == '\r\n' || content == '\n' || content == '\r') && firstFlag.value !== true) {
+    
+    var pattern = /^\d+\.\r\n/
+    // 空内容  无序列表 有序列表
+    // 不需要加载动画
+    if ((content == '' || content == '\r\n' || content == '\n' || content == '\r' ||  pattern.test(content)  || content == '-\r\n') && firstFlag.value !== true) {
         emit("loading")
     }
     if (firstFlag.value === true) {
@@ -216,8 +222,9 @@ const setValue = (content) => {
     }
     // 特殊处理，防止vditor未完成初始化就调用该接口
     if (flag.value === true) {
-        vditor.value.setValue(content)
+        vditor.value.setValue(content, true)
     }
+
 }
 
 
@@ -260,13 +267,13 @@ const showTools = () => {
 
 
 // 隐藏大纲
-const hideToc = () =>{
+const hideToc = () => {
     const outLineElement = document.querySelector('.vditor-outline');
     outLineElement.style.display = 'none';
 }
 
 // 显示大纲
-const showToc = () =>{
+const showToc = () => {
     const outLineElement = document.querySelector('.vditor-outline');
     outLineElement.style.display = 'block';
 }
@@ -320,6 +327,5 @@ defineExpose({
 .vd :deep(.preview_css) {
     display: none;
 }
-
 </style>
   
